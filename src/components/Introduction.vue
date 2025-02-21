@@ -1,7 +1,12 @@
 <template>
     <div class="introduction">
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta, corporis. Unde id ullam reprehenderit omnis libero consequuntur eligendi alias error eveniet quibusdam magnam praesentium, quaerat fugit! Blanditiis harum tenetur hic omnis saepe veritatis eos, quas officia fugiat natus? Veniam quod quia nihil accusamus, atque natus officia quisquam at, deleniti iusto ipsam inventore consequuntur? Saepe sed vitae odio numquam. Laudantium, eius ut unde cum, magnam inventore asperiores minima saepe libero omnis aperiam! Deleniti ea deserunt nam molestiae rerum, quas minus voluptas! Optio ad reprehenderit autem rem quam, accusamus officiis voluptatem delectus est a. Iure porro, facilis cupiditate ducimus, aliquid tempore quae quos ad doloremque, fugiat rem. Voluptate harum ipsa nostrum tenetur rem nesciunt, animi at eaque aspernatur sequi, perferendis voluptates odio quibusdam ad mollitia, sapiente repudiandae! Odit, nam. Non assumenda similique, ad aliquam eum culpa laboriosam mollitia laborum neque voluptas. Cum eos sint iste odio accusamus asperiores qui tempora nesciunt. Vero quos tempore asperiores et temporibus magni eveniet culpa quod voluptate enim! Delectus doloremque dolores animi temporibus nisi aut quo ullam saepe quibusdam facere, voluptatem amet, sit corporis at. Beatae, cum! Inventore voluptatum culpa, excepturi id esse soluta, libero cumque quod in doloribus quia ab enim, minus optio possimus voluptatibus quas.
-        </p>
+        <p>Hello, I am Tom Eijkelenkamp, a computational arts enthousiast and here on this website I show some of the works I have done.</p>
+        
+        <p>In my computing science master's degree I did many art related projects. There I studied compositional aesthetics in AI art for my thesis. In artworks you can use many building blocks and theories to create effects and stories. These have been studied extensively in the past by artists. Many books and lectures have been made on composition. In my research I studied how well AI chatbots are able to replicate such talks. Then I trained an art generator with this chatbot generated data, in order for it to gain knowledge on all kinds of topics of composition.
+
+        Appart from the thesis I did a research internship studying light illumination in AI generated images. In another course I studied how patterns in artworks relate to whether it receives likes and comments on Pinterest. Also I worked on projects developing an AI drum machine as well as a melody sampler.</p>
+
+        <p>Some of the studies you can download here.</p>
     </div>
 </template>
 
