@@ -1,12 +1,15 @@
 <template>
     <div class="introduction">
-        <p>Hello, I am Tom Eijkelenkamp, a computational arts enthousiast and here on this website I show some of the works I have done.</p>
-        
-        <p>In my computing science master's degree I did many art related projects. There I studied compositional aesthetics in AI art for my thesis. In artworks you can use many building blocks and theories to create effects and stories. These have been studied extensively in the past by artists. Many books and lectures have been made on composition. In my research I studied how well AI chatbots are able to replicate such talks. Then I trained an art generator with this chatbot generated data, in order for it to gain knowledge on all kinds of topics of composition.
-
-        Appart from the thesis I did a research internship studying light illumination in AI generated images. In another course I studied how patterns in artworks relate to whether it receives likes and comments on Pinterest. Also I worked on projects developing an AI drum machine as well as a melody sampler.</p>
-
-        <p>Some of the studies you can download here.</p>
+        <p>Hello, I am Tom Eijkelenkamp, a computational arts enthousiast and here on this website I show some of the works I have done.
+        <br/>
+        <br/>        
+        In my computing science master's degree I did many art related projects. There I studied compositional aesthetics in AI art for my thesis. In artworks you can use many building blocks and theories to create effects and stories. These have been studied extensively in the past by artists. Many books and lectures have been made on composition. In my research I studied how well AI chatbots are able to replicate such talks. Then I trained an art generator with this chatbot generated data, in order for it to gain knowledge on all kinds of topics of composition.
+        <br/>
+        <br/>
+        Appart from the thesis I did a research internship studying light illumination in AI generated images. In another course I studied how patterns in artworks relate to whether it receives likes and comments on Pinterest. Also I worked on projects developing an AI drum machine as well as a melody sampler.
+        <br/>
+        <br/>
+        Some of the studies you can download here.</p>
     </div>
 </template>
 
@@ -20,7 +23,7 @@ export default {
 
 
 .introduction {
-    text-align: center;
+    text-align: justify;
     display: flex;
     flex-direction: column;
     justify-content: center;
