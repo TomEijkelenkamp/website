@@ -1,6 +1,6 @@
 <template>
     <div class="introduction">
-        <p>Hello, I am Tom Eijkelenkamp, a computational arts enthousiast and here on this website I show some of the works I have done.
+        <p>Hello, I am Tom Eijkelenkamp, a computational artist and here on this website I show some of the works I have done.
         <br/>
         <br/>        
         In my computing science master's degree I did many art related projects. There I studied compositional aesthetics in AI art for my thesis. In artworks you can use many building blocks and theories to create effects and stories. These have been studied extensively in the past by artists. Many books and lectures have been made on composition. In my research I studied how well AI chatbots are able to replicate such talks. Then I trained an art generator with this chatbot generated data, in order for it to gain knowledge on all kinds of topics of composition.

@@ -40,4 +40,27 @@ export default {
   img {
     height: 90%;
   }
+
+  
+a {
+  margin: 10px;
+}
+
+a button {
+  text-decoration: none;
+  color: white;
+  background-color: #0A5C50;
+  border: none;
+  padding: 15px 32px;
+  margin: 5px;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: var(--color-border-hover);
+  }
+}
 </style>
