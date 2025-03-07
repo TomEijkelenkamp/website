@@ -18,7 +18,7 @@
         <br/>
         <br/>
         Internship:<br/>
-        Art generators are trained on extensive amounts of data, containing scenes with all kinds of lighting properties. When generator visuals one important aspect is to create high quality illumination among the subjects. In this study we search for ways to evaluate the quality of light rendering in diffusion model generated images.
+        Art generators are trained on extensive amounts of data, containing scenes with all kinds of lighting properties. When generating visuals one important aspect is to create a professional illumination setting among the subjects. In this study we search for ways to evaluate the quality of light rendering in diffusion model generated images.
         <br/>
         <br/>
         <br/>
