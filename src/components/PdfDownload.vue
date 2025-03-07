@@ -2,7 +2,7 @@
   <div class="pdf-download">
     <img :src="imageSrc" alt="Master Thesis Front Page" />
     <a :href="pdfHref" :download="pdfDownloadName">
-      <button>Download PDF</button>
+      <button>Download</button>
     </a>
   </div>
 </template>
@@ -29,8 +29,8 @@ export default {
 <style scoped>
   .pdf-download {
     background: var(--color-background);
-    padding: 50px;
-    height: 100vh;
+    padding: 20px;
+    height: 500px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -50,11 +50,12 @@ a button {
   text-decoration: none;
   color: white;
   background-color: #0A5C50;
+  font-family: 'New Amsterdam', sans-serif;
   border: none;
-  padding: 15px 32px;
+  padding: 10px;
   margin: 5px;
   display: inline-block;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
 }
 

@@ -1,3 +1,5 @@
+
+@import url('https://fonts.googleapis.com/css2?family=New+Amsterdam&family=Signika:wght@300..700&display=swap');
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
   --vt-c-white: #e5ede8;
@@ -62,7 +64,6 @@
   font-weight: normal;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Signika+Negative:wght@300;400;600&display=swap');
 
 body {
   min-height: 100vh;
@@ -71,9 +72,8 @@ body {
   transition:
     color 0.5s,
     background-color 0.5s;
+  font-family: 'Signika', sans-serif;
   line-height: 1.6;
-  font-family:
-    'Signika Negative', sans-serif;
   font-size: 15px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
