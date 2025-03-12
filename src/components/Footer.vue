@@ -7,7 +7,7 @@
       <a href="https://github.com/TomEijkelenkamp" target="_blank" aria-label="GitHub">
         <img src="/icons/github.svg" alt="GitHub" class="icon">
       </a>
-      <a href="https://www.instagram.com/tomatic_graphic/" target="_blank" aria-label="Instagram">
+      <a href="https://www.instagram.com/electronic_graphic/" target="_blank" aria-label="Instagram">
         <img src="/icons/instagram.svg" alt="Instagram" class="icon">
       </a>
       <a href="mailto:tomeijkelenkamp@hotmail.com" aria-label="Email">
