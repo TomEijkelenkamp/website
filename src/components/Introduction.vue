@@ -47,7 +47,7 @@ export default {
 
 .introduction h1 {
     font-family: 'New Amsterdam', sans-serif;
-    font-size: 8em;
+    font-size: 4.2em;
     margin-bottom: 10px;
     text-align: left;
 }
