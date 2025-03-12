@@ -59,7 +59,7 @@ export default {
 }
 
 .bold {
-    font-size: 2.0em;
+    font-size: 1.5em;
     font-weight: bold;
 }
 </style>
