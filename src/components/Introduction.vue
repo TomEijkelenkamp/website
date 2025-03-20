@@ -22,7 +22,7 @@
         <br/>
         <br/>
         <br/>
-        I am always looking for collaborations for research in the field of computer generated art. Feel free to reach out.
+        I am always looking for collaborations for research on the mix of art and computation. Feel free to reach out.
         </p>   
     </div>
 </template>
