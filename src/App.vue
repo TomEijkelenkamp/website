@@ -20,12 +20,13 @@ import Footer from './components/Footer.vue';
 </template>
 
 <style scoped>
-.pdf-downloads {
-    padding-top: 50px;
-  }
-footer {
+  footer {
     text-align: center;
     padding: 20px;
   }
+  @media (min-width: 1024px) {
+    .pdf-downloads {
+      padding-top: 50px;
+    }
+  }
 </style>
-
