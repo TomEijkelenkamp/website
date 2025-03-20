@@ -9,7 +9,7 @@
         <br/>
         <br/>
         </p>
-        <span class="bold" style="font-weight: bold;">Some of the studies you can download >>></span>
+        <span class="only-visible-on-one-column bold">Some of the studies you can download below</span><span class="only-visible-on-two-column bold">Some of the studies you can download >>></span>
         <p>
         <br/>
         <br/>
@@ -42,7 +42,6 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 100px 0 0 100px;
 }
 
 .introduction h1 {
@@ -59,7 +58,55 @@ export default {
 }
 
 .bold {
-    font-size: 1.5em;
+    font-size: 2.0em;
     font-weight: bold;
+}
+
+@media (max-width: 1024px) {
+    .introduction {
+        padding: 10vw;
+    }
+
+    .introduction h1 {
+        font-size: 2.2em;
+        margin-bottom: 10px;
+    }
+
+    .introduction p {
+        font-size: 0.8em;
+        line-height: 1.6;
+    }
+
+    .bold {
+        font-size: 0.8em;
+    }
+
+    .only-visible-on-two-column {
+        display: none;
+    }
+}
+
+@media (min-width: 1024px) {
+    .introduction {
+        padding: 100px 0 0 100px;
+    }
+    
+    .introduction h1 {
+        font-size: 4.2em;
+        margin-bottom: 10px;
+    }
+
+    .introduction p {
+        font-size: 1.2em;
+        line-height: 1.6;
+    }
+
+    .bold {
+        font-size: 2.0em;
+    }
+
+    .only-visible-on-one-column {
+        display: none;
+    }
 }
 </style>
