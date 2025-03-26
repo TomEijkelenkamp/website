@@ -58,7 +58,6 @@ export default {
 }
 
 .bold {
-    font-size: 2.0em;
     font-weight: bold;
 }
 
@@ -102,7 +101,7 @@ export default {
     }
 
     .bold {
-        font-size: 2.0em;
+        font-size: 1.5em;
     }
 
     .only-visible-on-one-column {
