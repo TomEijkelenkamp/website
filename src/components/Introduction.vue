@@ -8,11 +8,6 @@
         <br/>
         <br/>
         <br/>
-        </p>
-        <span class="only-visible-on-one-column bold">Some of the studies you can download below</span><span class="only-visible-on-two-column bold">Some of the studies you can download >>></span>
-        <p>
-        <br/>
-        <br/>
         Thesis:<br/>
         In artworks you can use many building blocks and theories to create effects and stories. These have been studied extensively in the past by artists. Many books and lectures have been made on composition. In my research I studied how well AI chatbots are able to replicate such talks. Then I trained an art generator with this chatbot generated data, in order for it to gain knowledge on all kinds of topics of composition.
         <br/>
@@ -46,7 +41,7 @@ export default {
 
 .introduction h1 {
     font-family: 'New Amsterdam', sans-serif;
-    font-size: 4.2em;
+    font-size: 3.0em;
     margin-bottom: 10px;
     text-align: left;
 }
