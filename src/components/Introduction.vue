@@ -1,7 +1,6 @@
 <template>
     <div class="introduction">
-        <h1>Hello</h1>
-        <p>I am Tom Eijkelenkamp, a computational artist and here on this website I show some of the works I have done.
+        <p>I am Tom Eijkelenkamp, a researcher in computational arts. On this website you can find some of my works.
         <br/>
         <br/>        
         In my computing science master's degree I did many art related projects. I studied compositional aesthetics in AI art for my thesis and light illumination in AI generated artworks for a research internship. In another research, I studied how patterns in artworks relate to whether it receives likes and comments on Pinterest. To continue, in the context of visual language, I did an analysis of iconic and symbolic language in an artwork of Picasso. Also I worked on projects developing an AI drum machine and melody sampler.
