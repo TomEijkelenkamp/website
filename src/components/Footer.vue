@@ -1,7 +1,7 @@
 <template>
     <p>© 2025 Tom Eijkelenkamp</p>
     <div class="social-buttons">
-      <a href="https://www.linkedin.com/in/tom-eijkelenkamp-924a66198/" target="_blank" aria-label="LinkedIn">
+      <a href="www.linkedin.com/in/tomeijkelenkamp" target="_blank" aria-label="LinkedIn">
         <img src="/icons/linkedin.svg" alt="LinkedIn" class="icon">
       </a>
       <a href="https://github.com/TomEijkelenkamp" target="_blank" aria-label="GitHub">
