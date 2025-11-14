@@ -1433,26 +1433,31 @@ html, body, #app {
 
 .top-bar {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  /* margin from top/right scales with width */
+  top: clamp(0.3rem, 0.4rem + 0.5vw, 0.8rem);
+  right: clamp(0.3rem, 0.4rem + 0.5vw, 0.8rem);
+
   display: flex;
-  gap: 0.5rem;
-  z-index: 20;
-  align-items: right;
-  justify-content: right;
+  gap: clamp(0.25rem, 0.2rem + 0.4vw, 0.7rem);
   z-index: 1200; /* above overlay (999) */
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .top-bar button {
   background: rgba(10, 10, 10, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #fff;
-  padding: 0.35rem 0.7rem;
-  /* border-radius: 0.4rem; */
+
+  /* padding scales with width */
+  padding: clamp(0.15rem, 0.1rem + 0.4vw, 0.4rem)
+           clamp(0.3rem, 0.3rem + 0.7vw, 0.9rem);
+
   cursor: pointer;
-  font-size: 1.7rem;
+
+  /* font size scales with width */
+  font-size: clamp(1.0rem, 0.8rem + 0.8vw, 1.7rem);
   font-family: "Baloo 2", sans-serif;
-  /* backdrop-filter: blur(4px); */
 }
 
 .top-bar button:hover {
