@@ -622,10 +622,6 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
     ? targetHeight - svgH - desiredOffsetY  // bottom-left with margin
     : (targetHeight - svgH) / 2             // center vertically
 
-  console.log('canvas (CSS):', targetWidth, targetHeight)
-  console.log('svg:', svgW, svgH)
-  console.log('draw at:', x, y)
-
   // draw at CSS pixel coords (transform handles dpr)
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
@@ -834,7 +830,6 @@ onMounted(async () => {
   for (const t of tabs) {
     activeOverlay.value = t
     await nextTick()   // let the browser actually render it once
-    console.log(`Prewarmed overlay: ${t}`)
   }
 
   // 3) restore original state (no overlay open)
