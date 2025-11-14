@@ -883,7 +883,7 @@ watch([
 })
 
 let img = new Image()
-img.src = "./src/assets/svg/normal.svg"
+img.src = "/svg/normal.svg"
 
 function initThree() {
   const el = container.value
