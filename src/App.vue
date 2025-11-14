@@ -942,6 +942,8 @@ function initThree() {
 
   window.addEventListener('resize', onResize)
   window.addEventListener('pointermove', onPointerMove)
+  window.addEventListener('pointerdown', () => { mouseEnabled.value = true })
+  window.addEventListener('pointerup', () => { mouseEnabled.value = false })
 }
 
 let dtPosition // keep reference for mass updates
