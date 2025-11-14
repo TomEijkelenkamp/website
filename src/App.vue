@@ -487,11 +487,32 @@ const colorB = reactive({ h: 160, s: 1.0, v: 1.0 })
 const textColorA = reactive({ h: 318, s: 1.0, v: 1.0 })  // example: red
 const textColorB = reactive({ h: 94, s: 1.0, v: 1.0 })  // example: cyan
 
-const sizeMin = ref(30.0)
-const sizeMax = ref(400.0)
+// Responsive particle sizes based on viewport width
+const sizeMin = computed(() => {
+  // min: 12px, max: 40px, scales with width
+  return Math.round(clamp(12, window.innerWidth * 0.04, 40))
+})
 
-const mouseTangentialStrength = ref(100.5)
-const mouseRadialStrength = ref(50.0) 
+const sizeMax = computed(() => {
+  // min: 80px, max: 350px, scales with width
+  return Math.round(clamp(80, window.innerWidth * 0.20, 350))
+})
+
+function clamp(min, val, max) {
+  return Math.min(Math.max(val, min), max)
+}
+
+// Responseive forces
+const mouseTangentialStrength = computed(() => {
+  // scales with width
+  return clamp(10.0, window.innerWidth * 0.06, 100.0)
+})
+
+const mouseRadialStrength = computed(() => {
+  // scales with width
+  return clamp(5.0, window.innerWidth * 0.03, 50.0)
+})
+
 const sideGravityStrength = ref(5.0)
 const groundLevel = ref(0.9)
 const groundBounce = ref(30.0)
