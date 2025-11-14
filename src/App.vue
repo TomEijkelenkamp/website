@@ -513,7 +513,7 @@ const mouseRadialStrength = computed(() => {
   return clamp(5.0, window.innerWidth * 0.03, 50.0)
 })
 
-const sideGravityStrength = ref(5.0)
+const sideGravityStrength = ref(0.0)
 const groundLevel = ref(0.9)
 const groundBounce = ref(30.0)
 const groundFriction = ref(80.0)
