@@ -600,32 +600,42 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, targetWidth, targetHeight)
 
-  // SVG intrinsic size (in CSS px)
-  const svgW = img.width  || 600
-  const svgH = img.height || 150
+  // SVG intrinsic size (try natural size first)
+  const svgW = img.naturalWidth  || img.width  || 600
+  const svgH = img.naturalHeight || img.height || 150
 
-  // desired offsets from the bottom-left corner (in CSS px)
+  // desired offsets from bottom-left corner (in CSS px)
   const desiredOffsetX = 100
   const desiredOffsetY = 100
 
-  // how much space do we have?
-  const availableX = targetWidth - svgW
-  const availableY = targetHeight - svgH
+  // maximum drawable area if we want those margins
+  const maxW = Math.max(targetWidth  - 2 * desiredOffsetX, 1)
+  const maxH = Math.max(targetHeight - 2 * desiredOffsetY, 1)
 
-  // if we have enough space, use the desired offsets;
-  // if not, center the image on that axis
-  const x = availableX >= desiredOffsetX * 2
+  // scale factor so the SVG fits in that area (never scale up above 1)
+  const scale = Math.min(1.0, maxW / svgW, maxH / svgH)
+
+  const drawW = svgW * scale
+  const drawH = svgH * scale
+
+  // recompute remaining free space after scaling
+  const remainingX = targetWidth  - drawW
+  const remainingY = targetHeight - drawH
+
+  // if we have enough room for the desired offsets, use them;
+  // otherwise, center on that axis
+  const x = remainingX >= desiredOffsetX * 2
     ? desiredOffsetX
-    : (targetWidth - svgW) / 2
+    : (targetWidth - drawW) / 2
 
-  const y = availableY >= desiredOffsetY * 2
-    ? targetHeight - svgH - desiredOffsetY  // bottom-left with margin
-    : (targetHeight - svgH) / 2             // center vertically
+  const y = remainingY >= desiredOffsetY * 2
+    ? targetHeight - drawH - desiredOffsetY  // bottom-left with margin
+    : (targetHeight - drawH) / 2             // center vertically
 
   // draw at CSS pixel coords (transform handles dpr)
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(img, x, y, svgW, svgH)
+  ctx.drawImage(img, x, y, drawW, drawH)
 
   // make texture
   const tex = new THREE.CanvasTexture(canvas)
@@ -653,7 +663,6 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
   postMesh.position.set(0, 0, 5)
   postScene.add(postMesh)
 }
-
 
 function createPostMaterial(simTex, textTex, screenSize) {
   return new THREE.ShaderMaterial({
