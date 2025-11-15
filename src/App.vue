@@ -1626,6 +1626,7 @@ html, body, #app {
 .dance-image-wrapper img {
   display: block;
   width: 100%;
+  max-width: 85vw;
   height: auto;
   object-fit: cover;
 }
