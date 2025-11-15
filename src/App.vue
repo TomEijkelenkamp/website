@@ -1614,12 +1614,13 @@ html, body, #app {
 .dance-item {
   cursor: pointer;
   text-align: center;
+  max-width: 100%;
 }
 
 .dance-image-wrapper {
   height: 235px;
   /* optioneel: max-breedte om extra veilig te zijn op kleine schermen */
-  max-width: 100%;
+  width: 100%;
   overflow: hidden;
   /* eventueel nog: border-radius, background, etc. */
 }
@@ -1627,7 +1628,7 @@ html, body, #app {
 .dance-image-wrapper img {
   display: block;
   height: 100%;   /* hoogte volgt wrapper → 235px */
-  width: auto;    /* breedte volgt aspect ratio */
+  width: 100%;    /* breedte volgt aspect ratio */
 }
 
 .dance-caption {
