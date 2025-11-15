@@ -1620,13 +1620,12 @@ html, body, #app {
   overflow: hidden;
   background: rgba(255, 255, 255, 0.06);
   height: 235px;
-  max-width: 420px;
+  max-width: 85vw;
 }
 
 .dance-image-wrapper img {
   display: block;
   width: 100%;
-  max-width: 85vw;
   height: auto;
   object-fit: cover;
 }
