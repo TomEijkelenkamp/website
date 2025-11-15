@@ -1605,9 +1605,10 @@ html, body, #app {
 }
 
 .dance-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, 420px);
+  display: flex;
+  flex-wrap: wrap;      /* laat items naar volgende regel lopen */
   gap: 0.75rem;
+  justify-content: flex-start; /* of center, wat je mooi vindt */
 }
 
 .dance-item {
@@ -1616,18 +1617,17 @@ html, body, #app {
 }
 
 .dance-image-wrapper {
-  /* border-radius: 0.75rem; */
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.06);
   height: 235px;
-  max-width: 85vw;
+  /* optioneel: max-breedte om extra veilig te zijn op kleine schermen */
+  max-width: 100%;
+  overflow: hidden;
+  /* eventueel nog: border-radius, background, etc. */
 }
 
 .dance-image-wrapper img {
   display: block;
-  width: 100%;
-  height: auto;
-  object-fit: cover;
+  height: 100%;   /* hoogte volgt wrapper → 235px */
+  width: auto;    /* breedte volgt aspect ratio */
 }
 
 .dance-caption {
