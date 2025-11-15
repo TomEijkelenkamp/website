@@ -477,7 +477,7 @@ const container = ref(null)
 const hasPointer = ref(false)
 
 // UI state
-const squareRes = ref(32) // 16x16 = 256
+const squareRes = ref(16) // 16x16 = 256
 const damping = ref(0.9)
 const massMin = ref(5.0)
 const massMax = ref(10.0)
@@ -490,12 +490,12 @@ const textColorB = reactive({ h: 94, s: 1.0, v: 1.0 })  // example: cyan
 // Responsive particle sizes based on viewport width
 const sizeMin = computed(() => {
   // min: 12px, max: 40px, scales with width
-  return Math.round(clamp(12, window.innerWidth * 0.04, 40))
+  return Math.round(clamp(12, window.innerWidth * 0.08, 40))
 })
 
 const sizeMax = computed(() => {
   // min: 80px, max: 350px, scales with width
-  return Math.round(clamp(80, window.innerWidth * 0.20, 350))
+  return Math.round(clamp(80, window.innerWidth * 0.40, 350))
 })
 
 function clamp(min, val, max) {
@@ -625,9 +625,27 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
   const svgW = img.naturalWidth  || img.width  || 600
   const svgH = img.naturalHeight || img.height || 150
 
-  // desired offsets from bottom-left corner (in CSS px)
-  const desiredOffsetX = 100
-  const desiredOffsetY = 100
+  // --- dynamic offset based on canvas size ---
+
+  // "design" canvas size you tuned for (your defaults)
+  const refWidth  = 1024
+  const refHeight = 512
+
+  // how big is the current canvas compared to the reference?
+  const sizeRatio = Math.min(targetWidth / refWidth, targetHeight / refHeight)
+  // clamp to [0, 1] so we don't go above reference
+  const t = Math.max(0, Math.min(1, sizeRatio))
+
+  // interpolate offset scale from 0.5 (small screens) to 1.0 (large)
+  // t = 0   -> 0.5
+  // t = 1   -> 1.0
+  const offsetScale = 0.1 + 0.9 * t
+
+  const baseOffsetX = 100
+  const baseOffsetY = 100
+
+  const desiredOffsetX = baseOffsetX * offsetScale
+  const desiredOffsetY = baseOffsetY * offsetScale
 
   // maximum drawable area if we want those margins
   const maxW = Math.max(targetWidth  - 2 * desiredOffsetX, 1)
@@ -1457,8 +1475,10 @@ html, body, #app {
 .top-bar {
   position: absolute;
   /* margin from top/right scales with width */
-  top: clamp(0.3rem, 0.4rem + 0.5vw, 0.8rem);
-  right: clamp(0.3rem, 0.4rem + 0.5vw, 0.8rem);
+  top: clamp(0.6rem, 0.4rem + 0.5vw, 0.8rem);
+  right: clamp(0.6rem, 0.4rem + 0.5vw, 0.8rem);
+
+  left: clamp(0.6rem, -2rem + 15vw, 3rem);
 
   display: flex;
   gap: clamp(0.25rem, 0.2rem + 0.4vw, 0.7rem);
@@ -1473,8 +1493,8 @@ html, body, #app {
   color: #fff;
 
   /* padding scales with width */
-  padding: clamp(0.15rem, 0.1rem + 0.4vw, 0.4rem)
-           clamp(0.3rem, 0.3rem + 0.7vw, 0.9rem);
+  padding: clamp(0.3rem, 0.1rem + 0.4vw, 0.4rem)
+           clamp(0.6rem, 0.3rem + 0.7vw, 0.9rem);
 
   cursor: pointer;
 
