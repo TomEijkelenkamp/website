@@ -396,28 +396,34 @@ const animationItems = ref([
   },
   {
     id: 2,
+    title: 'Generative art experiment 2',
+    url: 'https://www.instagram.com/p/DRK6Hf5jnfd/',
+    thumbnail: '/animation/flux.jpg',
+  },
+  {
+    id: 3,
     title: 'Projection + movement test',
     url: 'https://www.instagram.com/p/DKO7ZbPs9O6/',
     thumbnail: '/animation/fire.png',
   },
   {
-    id: 3,
+    id: 4,
     title: 'Light play study',
     url: 'https://www.instagram.com/p/DN2zWV93JW0/',
     thumbnail: '/animation/matrix.jpg',
   },
   {
-    id: 4,
+    id: 5,
     title: 'Generative art experiment',
     url: 'https://www.instagram.com/p/DMkLJEeu8YD/',
     thumbnail: '/animation/moon.png',
   },
   {
-    id: 5,
+    id: 6,
     title: 'Algorithmic art piece',
     url: 'https://www.instagram.com/p/DKMJjqQITft/',
     thumbnail: '/animation/creature.png',
-  }
+  },
 ])
 
 // if your dance images are inline in the template, you can define them here:
