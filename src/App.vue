@@ -1637,32 +1637,33 @@ watch(massMax, (val) => {
 
 .me-text {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 200px);
-  gap: 0.75rem;
+  grid-template-columns: minmax(130px, 13vw) minmax(20vw, 300px);
+  gap: 27px;
 }
 
 .me-text .me-image-wrapper img {
   display: block;
-  /* width: ; */
-  height: 235px;
+  width: 100%;
+  height: auto;
   object-fit: cover;
 }
 
 .me-text .social-buttons {
-  display: flex;
-  justify-content: left;
-  align-items: center;
-  gap: 15px;
+  display: grid;
+  align-items: center;      /* ← vertical alignment van ALLES */
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 100%;
+  gap: 13px;
   margin-top: 10px;
 }
 
-/* Icon size */
 .me-text .social-buttons .icon {
-  width: 60px;
-  height: 60px;
-  filter: var(--icon-color);
-  transition: filter 0.2s ease-in-out;
+  /* 4 iconen in 100% breedte van de kolom, minus 3 gaps */
+  width: 100%;
+  height: auto;           /* behoud verhouding */
+  aspect-ratio: 1 / 1;    /* vierkant houden */
   filter: brightness(0) invert(1);
+  transition: filter 0.2s ease-in-out;
 }
 
 .overlay {
