@@ -1618,7 +1618,7 @@ watch(massMax, (val) => {
 .dance-image-wrapper {
   height: 235px;
   /* optioneel: max-breedte om extra veilig te zijn op kleine schermen */
-  width: 100%;
+  width: 360px;
   overflow: hidden;
   /* eventueel nog: border-radius, background, etc. */
 }
