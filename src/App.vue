@@ -89,7 +89,7 @@
             @click="openVideo('https://www.youtube.com/watch?v=ZS1LA9eGNXo')"
           >
             <div class="dance-image-wrapper">
-              <img src="/dance/untitled.png" alt="Untitled" />
+              <img src="/dance/untitled.jpg" alt="Untitled" />
             </div>
             <!-- <div class="dance-caption">untitled</div> -->
           </div>
