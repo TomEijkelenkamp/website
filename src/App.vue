@@ -94,6 +94,16 @@
             </div>
             <!-- <div class="dance-caption">untitled</div> -->
           </div>
+
+          <!-- 2Dance Untitled 2026 -->
+          <div
+            class="dance-item"
+            @click="openVideo('https://www.youtube.com/watch?v=xU7iY7s7Fnc')"
+          >
+            <div class="dance-image-wrapper">
+              <img src="/dance/untitled-2026.jpg" alt="2Dance Untitled 2026" />
+            </div>
+          </div>
         </div>
 
 
@@ -396,7 +406,8 @@ const animationItems = ref([
 // if your dance images are inline in the template, you can define them here:
 const danceImageUrls = [
   '/dance/love-letters.jpg',
-  '/dance/untitled.png',
+  '/dance/untitled.jpg',
+  '/dance/untitled-2026.jpg',
 ]
 
 // collect all URLs into one array
@@ -1815,8 +1826,8 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
 .dance-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(1rem, 2.5vw, 2.5rem);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.75rem, 1.75vw, 1.5rem);
 }
 
 .dance-item {
