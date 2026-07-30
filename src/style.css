@@ -5,3 +5,7 @@ html, body, #app {
   height: 100%;
   overscroll-behavior: none;
 }
+
+body {
+  font-family: "Space Grotesk", sans-serif;
+}

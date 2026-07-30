@@ -122,78 +122,46 @@
       </div>
     </div>
 
-    <div class="control-panel">
+    <button class="control-toggle" @click="controlPanelOpen = !controlPanelOpen">
+      {{ controlPanelOpen ? 'Close controls' : 'Controls' }}
+    </button>
+
+    <div v-show="controlPanelOpen" class="control-panel">
       <section>
         <label>
-          Square count: {{ squareRes }} × {{ squareRes }} ({{ squareRes * squareRes }} squares)
-          <input type="range" min="8" max="48" step="8" v-model.number="squareRes" />
+          Triangle count: {{ squareRes }} × {{ squareRes }} ({{ squareRes * squareRes }} triangles)
+          <input type="range" min="1" max="12" step="1" v-model.number="squareRes" />
         </label>
       </section>
 
       <div class="two-columns">
         <section>
           <label>
-            Mouse swirl: {{ mouseTangentialStrength.toFixed(1) }}
-            <input
-              type="range"
-              min="0"
-              max="100.0"
-              step="0.1"
-              v-model.number="mouseTangentialStrength"
-            />
+            Path speed (desktop): {{ pathSpeed.toFixed(0) }}
+            <input type="range" min="10" max="160" step="1" v-model.number="pathSpeed" />
           </label>
           <label>
-            Mouse pull: {{ mouseRadialStrength.toFixed(1) }}
-            <input
-              type="range"
-              min="0"
-              max="100.0"
-              step="0.1"
-              v-model.number="mouseRadialStrength"
-            />
-          </label>
-          <label>
-            Side gravity: {{ sideGravityStrength.toFixed(1) }}
-            <input
-              type="range"
-              min="0"
-              max="100.0"
-              step="0.1"
-              v-model.number="sideGravityStrength"
-            />
+            Turn freedom: {{ pathMorphSpeed.toFixed(2) }}
+            <input type="range" min="0.1" max="1" step="0.05" v-model.number="pathMorphSpeed" />
           </label>
         </section>
 
         <section>
           <label>
-            Ground level: {{ groundLevel.toFixed(1) }}
-            <input
-              type="range"
-              min="0.0"
-              max="1.0"
-              step="0.1"
-              v-model.number="groundLevel"
-            />
+            Look-ahead points: {{ pathPointCount }}
+            <input type="range" min="12" max="24" step="1" v-model.number="pathPointCount" />
           </label>
           <label>
-            Ground bounce: {{ groundBounce.toFixed(1) }}
-            <input
-              type="range"
-              min="0"
-              max="100.0"
-              step="0.1"
-              v-model.number="groundBounce"
-            />
+            Screen coverage: {{ pathCoverage.toFixed(2) }}
+            <input type="range" min="0.35" max="1" step="0.01" v-model.number="pathCoverage" />
           </label>
           <label>
-            Ground friction: {{ groundFriction.toFixed(1) }}
-            <input
-              type="range"
-              min="0.5"
-              max="100.0"
-              step="0.1"
-              v-model.number="groundFriction"
-            />
+            Gravity feel: {{ gravityEffect.toFixed(2) }}
+            <input type="range" min="0" max="0.8" step="0.01" v-model.number="gravityEffect" />
+          </label>
+          <label>
+            Rotation lag: {{ rotationLag.toFixed(2) }}
+            <input type="range" min="0.1" max="3" step="0.05" v-model.number="rotationLag" />
           </label>
         </section>
       </div>
@@ -234,35 +202,19 @@
       <div class="two-columns">
         <section>
           <label>
-            Min size: {{ sizeMin.toFixed(1) }}
-            <input type="range" min="1.0" max="400.0" step="0.1" v-model.number="sizeMin" />
+            Min size (desktop): {{ sizeMin.toFixed(1) }}
+            <input type="range" min="4" max="120" step="1" v-model.number="sizeMin" />
           </label>
           <label>
-            Max size: {{ sizeMax.toFixed(1) }}
-            <input type="range" min="1.0" max="400.0" step="0.1" v-model.number="sizeMax" />
+            Max size (desktop): {{ sizeMax.toFixed(1) }}
+            <input type="range" min="80" max="600" step="5" v-model.number="sizeMax" />
           </label>
         </section>
 
         <section>
           <label>
-            Min mass: {{ massMin.toFixed(1) }}
-            <input
-              type="range"
-              min="0.1"
-              max="400.0"
-              step="0.1"
-              v-model.number="massMin"
-            />
-          </label>
-          <label>
-            Max mass: {{ massMax.toFixed(1) }}
-            <input
-              type="range"
-              min="0.1"
-              max="400.0"
-              step="0.1"
-              v-model.number="massMax"
-            />
+            Train spread: {{ trainSpread.toFixed(2) }}
+            <input type="range" min="0.15" max="1" step="0.01" v-model.number="trainSpread" />
           </label>
         </section>
       </div>
@@ -308,7 +260,6 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, reactive, computed, watch, nextTick } from 'vue'
 import * as THREE from 'three'
-import { GPUComputationRenderer } from 'three/examples/jsm/misc/GPUComputationRenderer.js'
 const activeOverlay = ref(null) // 'research' | 'animation' | 'dance' | 'me' | null
 
 // NEW: flag to hide overlay while we prewarm
@@ -483,46 +434,31 @@ const container = ref(null)
 const hasPointer = ref(false)
 
 // UI state
-const squareRes = ref(16) // 16x16 = 256
-const damping = ref(0.9)
-const massMin = ref(5.0)
-const massMax = ref(10.0)
+const controlPanelOpen = ref(false)
+const squareRes = ref(3) // 3x3 = 9 triangles
 
-const colorA = reactive({ h: 258, s: 1.0, v: 0.2 })
-const colorB = reactive({ h: 160, s: 1.0, v: 1.0 })
-const textColorA = reactive({ h: 318, s: 1.0, v: 1.0 })  // example: red
-const textColorB = reactive({ h: 94, s: 1.0, v: 1.0 })  // example: cyan
+const colorA = reactive({ h: 109, s: 0.09, v: 0.96 })
+const colorB = reactive({ h: 119, s: 0.37, v: 0.92 })
+const textColorA = reactive({ h: 258, s: 0.43, v: 0.74 })
+const textColorB = reactive({ h: 238, s: 0.22, v: 0.42 })
 
-// Responsive particle sizes based on viewport width
-const sizeMin = computed(() => {
-  // min: 12px, max: 40px, scales with width
-  return Math.round(clamp(12, window.innerWidth * 0.08, 40))
-})
-
-const sizeMax = computed(() => {
-  // min: 80px, max: 350px, scales with width
-  return Math.round(clamp(80, window.innerWidth * 0.40, 350))
-})
+const sizeMin = ref(18)
+const sizeMax = ref(460)
+const viewportScale = ref(1)
+const effectiveSizeMin = computed(() => sizeMin.value * viewportScale.value)
+const effectiveSizeMax = computed(() => sizeMax.value * viewportScale.value)
+const pathSpeed = ref(58)
+const effectivePathSpeed = computed(() => pathSpeed.value * viewportScale.value)
+const pathMorphSpeed = ref(0.55)
+const pathPointCount = ref(14)
+const pathCoverage = ref(0.98)
+const gravityEffect = ref(0.22)
+const rotationLag = ref(0.65)
+const trainSpread = ref(1)
 
 function clamp(min, val, max) {
   return Math.min(Math.max(val, min), max)
 }
-
-// Responseive forces
-const mouseTangentialStrength = computed(() => {
-  // scales with width
-  return clamp(10.0, window.innerWidth * 0.06, 100.0)
-})
-
-const mouseRadialStrength = computed(() => {
-  // scales with width
-  return clamp(5.0, window.innerWidth * 0.03, 50.0)
-})
-
-const sideGravityStrength = ref(0.0)
-const groundLevel = ref(0.9)
-const groundBounce = ref(30.0)
-const groundFriction = ref(80.0)
 
 const textHueShift = ref(0.50)
 const textSatMult = ref(2.0)
@@ -545,6 +481,8 @@ const textGradientCss = computed(() => {
 let renderer, scene, camera
 let gpuCompute, velVar, posVar
 let renderMesh
+let splineStates = []
+let sharedSpline = null
 let animationId = null
 let mouse = new THREE.Vector2(0, 0)
 let bounds = new THREE.Vector2(1, 1)
@@ -587,7 +525,7 @@ function createTextTexture(
   ctx.fillStyle = color
   ctx.textAlign = align
   ctx.textBaseline = 'middle'
-  ctx.font = `bold ${fontSize}px "Mohave", sans-serif`
+  ctx.font = `${fontWeight} ${fontSize}px "Space Grotesk", sans-serif`
 
   // handle multiple lines
   const lines = text.split(/\r?\n/)
@@ -627,60 +565,27 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, targetWidth, targetHeight)
 
-  // SVG intrinsic size (try natural size first)
-  const svgW = img.naturalWidth  || img.width  || 600
-  const svgH = img.naturalHeight || img.height || 150
-
-  // --- dynamic offset based on canvas size ---
-
-  // "design" canvas size you tuned for (your defaults)
-  const refWidth  = 1024
-  const refHeight = 512
-
-  // how big is the current canvas compared to the reference?
-  const sizeRatio = Math.min(targetWidth / refWidth, targetHeight / refHeight)
-  // clamp to [0, 1] so we don't go above reference
-  const t = Math.max(0, Math.min(1, sizeRatio))
-
-  // interpolate offset scale from 0.5 (small screens) to 1.0 (large)
-  // t = 0   -> 0.5
-  // t = 1   -> 1.0
-  const offsetScale = 0.1 + 0.9 * t
-
-  const baseOffsetX = 100
-  const baseOffsetY = 100
-
-  const desiredOffsetX = baseOffsetX * offsetScale
-  const desiredOffsetY = baseOffsetY * offsetScale
-
-  // maximum drawable area if we want those margins
-  const maxW = Math.max(targetWidth  - 2 * desiredOffsetX, 1)
-  const maxH = Math.max(targetHeight - 2 * desiredOffsetY, 1)
-
-  // scale factor so the SVG fits in that area (never scale up above 1)
-  const scale = Math.min(1.0, maxW / svgW, maxH / svgH)
-
-  const drawW = svgW * scale
-  const drawH = svgH * scale
-
-  // recompute remaining free space after scaling
-  const remainingX = targetWidth  - drawW
-  const remainingY = targetHeight - drawH
-
-  // if we have enough room for the desired offsets, use them;
-  // otherwise, center on that axis
-  const x = remainingX >= desiredOffsetX * 2
-    ? desiredOffsetX
-    : (targetWidth - drawW) / 2
-
-  const y = remainingY >= desiredOffsetY * 2
-    ? targetHeight - drawH - desiredOffsetY  // bottom-left with margin
-    : (targetHeight - drawH) / 2             // center vertically
-
-  // draw at CSS pixel coords (transform handles dpr)
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(img, x, y, drawW, drawH)
+  ctx.fillStyle = '#ffffff'
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+
+  const margin = Math.max(24, Math.min(100, targetWidth * 0.065))
+  let titleSize = Math.max(28, Math.min(58, targetWidth * 0.038))
+  ctx.font = `500 ${titleSize}px "Space Grotesk", sans-serif`
+  const maxTitleWidth = targetWidth - margin * 2
+  const measuredWidth = ctx.measureText('Tom Eijkelenkamp').width
+  if (measuredWidth > maxTitleWidth) titleSize *= maxTitleWidth / measuredWidth
+
+  const subtitleSize = Math.max(12, titleSize * 0.23)
+  const subtitleY = targetHeight - margin
+  const titleY = subtitleY - subtitleSize * 1.75
+
+  ctx.font = `500 ${titleSize}px "Space Grotesk", sans-serif`
+  ctx.fillText('Tom Eijkelenkamp', margin, titleY)
+  ctx.font = `400 ${subtitleSize}px "Space Grotesk", sans-serif`
+  ctx.fillText('Artist · Graphics · Algorithmic Design', margin, subtitleY)
 
   // make texture
   const tex = new THREE.CanvasTexture(canvas)
@@ -790,18 +695,16 @@ function createPostMaterial(simTex, textTex, screenSize) {
         // 1) Background color in HSV
         vec3 baseHSV = rgb2hsv(base);
 
-        // 2) Compute interpolation factor tBg: how far baseHSV is between uBgHSV_A and uBgHSV_B
-        vec3 bg0 = uBgHSV_A;
-        vec3 bg1 = uBgHSV_B;
-        vec3 bgDir = bg1 - bg0;
-        float denom = dot(bgDir, bgDir);
-        float tBg = 0.0;
-        if (denom > 0.0) {
-          tBg = clamp(dot(baseHSV - bg0, bgDir) / denom, 0.0, 1.0);
-        }
+        // Detect triangle coverage independently from the subtle pastel colors.
+        // The paper is nearly unsaturated and slightly brighter than the shapes.
+        float shapeSignal = length(vec2(
+          max(baseHSV.y - 0.025, 0.0),
+          max(0.975 - baseHSV.z, 0.0)
+        ));
+        float coverage = smoothstep(0.012, 0.040, shapeSignal);
 
-        // 3) Interpolate text HSV using same tBg
-        vec3 textHSV = mix(uTextHSV_A, uTextHSV_B, tBg);
+        // Make the letters visibly react whenever a triangle passes behind them.
+        vec3 textHSV = mix(uTextHSV_A, uTextHSV_B, coverage);
 
         // 4) Convert to RGB
         vec3 textRGB = hsv2rgb(textHSV);
@@ -906,31 +809,6 @@ watch(squareRes, (newVal) => {
   buildSimulation(newVal)
 })
 
-watch([
-  mouseTangentialStrength,
-  mouseRadialStrength,
-  sideGravityStrength,
-  massMin,
-  massMax,
-  damping,
-  groundLevel,
-  groundBounce,
-  groundFriction
-], () => {
-  if (!velVar || !posVar) return
-  velVar.material.uniforms.uMouseTangential.value = mouseTangentialStrength.value
-  velVar.material.uniforms.uMouseRadial.value = mouseRadialStrength.value
-  velVar.material.uniforms.uSideGravity.value = sideGravityStrength.value
-  velVar.material.uniforms.uDamping.value = damping.value
-  velVar.material.uniforms.uWallInset.value = groundLevel.value
-  velVar.material.uniforms.uWallBounce.value = groundBounce.value
-  velVar.material.uniforms.uWallFriction.value = groundFriction.value
-  posVar.material.uniforms.uWallInset.value = groundLevel.value
-
-  recomputeMassTexture(dtPosition, renderMesh.geometry.getAttribute('aSeed').array)
-  dtPosition.needsUpdate = true
-})
-
 let img = new Image()
 img.src = "/svg/normal.svg"
 
@@ -938,10 +816,12 @@ function initThree() {
   const el = container.value
   const w = el.clientWidth
   const h = el.clientHeight
+  viewportScale.value = clamp(0.25, Math.min(w / 1280, h / 800), 1)
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
   renderer.setSize(w, h)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setClearColor(0xfbfdf9, 1)
   el.appendChild(renderer.domElement)
 
   scene = new THREE.Scene()
@@ -960,9 +840,12 @@ function initThree() {
 
   // // make text texture once
   // textTexture = createTextTexture("Tom Eijkelenkamp\nArtist | Graphics | Algorithmic Design", 3840, 2160)
-  img.onload = function() {
-      loadSvgAsTexture(img, w, h)
-  }
+  Promise.all([
+    document.fonts.load('500 48px "Space Grotesk"'),
+    document.fonts.load('400 24px "Space Grotesk"'),
+  ]).then(() => {
+    loadSvgAsTexture(img, w, h)
+  })
 
   window.addEventListener('resize', onResize)
   window.addEventListener('pointermove', onPointerMove)
@@ -971,6 +854,69 @@ function initThree() {
 }
 
 let dtPosition // keep reference for mass updates
+
+function splinePoint(points, progress) {
+  const maxProgress = Math.max(0.001, points.length - 3.001)
+  const safeProgress = clamp(0, progress, maxProgress)
+  const index = Math.min(Math.floor(safeProgress), points.length - 4)
+  const t = safeProgress - index
+  const t2 = t * t
+  const t3 = t2 * t
+  const p0 = points[index]
+  const p1 = points[index + 1]
+  const p2 = points[index + 2]
+  const p3 = points[index + 3]
+  const b0 = (-t3 + 3 * t2 - 3 * t + 1) / 6
+  const b1 = (3 * t3 - 6 * t2 + 4) / 6
+  const b2 = (-3 * t3 + 3 * t2 + 3 * t + 1) / 6
+  const b3 = t3 / 6
+  return new THREE.Vector2(
+    p0.x * b0 + p1.x * b1 + p2.x * b2 + p3.x * b3,
+    p0.y * b0 + p1.y * b1 + p2.y * b2 + p3.y * b3
+  )
+}
+
+function randomScreenPoint() {
+  return new THREE.Vector2(
+    (Math.random() * 2 - 1) * Math.max(40, bounds.x - 30) * pathCoverage.value,
+    (Math.random() * 2 - 1) * Math.max(40, bounds.y - 30) * pathCoverage.value
+  )
+}
+
+function createNextSplinePoint(points) {
+  if (points.length < 2) return randomScreenPoint()
+  const previous = points[points.length - 2]
+  const last = points[points.length - 1]
+  const forward = last.clone().sub(previous).normalize()
+  const minDistance = Math.min(bounds.x, bounds.y) * 0.35
+
+  for (let attempt = 0; attempt < 24; attempt++) {
+    const candidate = randomScreenPoint()
+    const direction = candidate.clone().sub(last)
+    if (direction.length() < minDistance) continue
+    direction.normalize()
+    const minimumDot = -0.15 - pathMorphSpeed.value * 0.70
+    if (direction.dot(forward) > minimumDot) return candidate
+  }
+
+  return randomScreenPoint()
+}
+
+function createSharedSplinePoints(pointCount = pathPointCount.value) {
+  const points = [randomScreenPoint(), randomScreenPoint()]
+  while (points.length < pointCount) points.push(createNextSplinePoint(points))
+  return points
+}
+
+function createSplineState(seed) {
+  const size = effectiveSizeMin.value
+    + (effectiveSizeMax.value - effectiveSizeMin.value) * seed
+  return {
+    seed,
+    size,
+    angle: Math.random() * Math.PI * 2,
+  }
+}
 
 function buildSimulation(res) {
   // remove old mesh
@@ -981,54 +927,32 @@ function buildSimulation(res) {
     renderMesh = null
   }
 
-  gpuCompute = new GPUComputationRenderer(res, res, renderer)
-
-  dtPosition = gpuCompute.createTexture()
-  const dtVelocity = gpuCompute.createTexture()
-
   const uvs = []
+    const count = res * res
+    const distributedSeeds = Array.from(
+      { length: count },
+      (_, index) => count === 1 ? 0.5 : index / (count - 1)
+    )
+
+    for (let i = distributedSeeds.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[distributedSeeds[i], distributedSeeds[j]] = [distributedSeeds[j], distributedSeeds[i]]
+    }
+
     const seeds = []
+    let seedIndex = 0
     for (let i = 0; i < res; i++) {
       for (let j = 0; j < res; j++) {
         const u = i / (res - 1 || 1)
         const v = j / (res - 1 || 1)
         uvs.push(u, v)
-        seeds.push(Math.random())
+        seeds.push(distributedSeeds[seedIndex++])
       }
     }
 
-  fillPositionTexture(dtPosition, bounds, seeds)
-  fillVelocityTexture(dtVelocity)
-
-  velVar = gpuCompute.addVariable('textureVelocity', velocityShader(), dtVelocity)
-  posVar = gpuCompute.addVariable('texturePosition', positionShader(), dtPosition)
-
-  gpuCompute.setVariableDependencies(velVar, [velVar, posVar])
-  gpuCompute.setVariableDependencies(posVar, [posVar, velVar])
-
-  // uniforms, now including uDelta and strengths
-  velVar.material.uniforms = {
-    uTime: { value: 0 },
-    uDelta: { value: 0 },
-    uMouse: { value: new THREE.Vector3(0, 0, 0) },
-    uBounds: { value: new THREE.Vector2(bounds.x, bounds.y) },
-    uMouseTangential: { value: mouseTangentialStrength.value },
-    uMouseRadial: { value: mouseRadialStrength.value }, 
-    uSideGravity: { value: sideGravityStrength.value },
-    uDamping: { value: damping.value },
-    uWallInset: { value: groundLevel.value },
-    uWallBounce: { value: groundBounce.value },
-    uWallFriction: { value: groundFriction.value },
-  }
-
-  posVar.material.uniforms = {
-    uDelta: { value: 0 },
-    uBounds: { value: new THREE.Vector2(bounds.x, bounds.y) },
-    uWallInset: { value: groundLevel.value },
-  }
-
-  const error = gpuCompute.init()
-  if (error) console.error(error)
+  gpuCompute = null
+  velVar = null
+  posVar = null
 
   // instanced mesh
   const triangle = new THREE.BufferGeometry()
@@ -1048,7 +972,6 @@ function buildSimulation(res) {
   ])
   triangle.setAttribute('aBarycentric', new THREE.BufferAttribute(bary, 3))
 
-  const count = res * res
   const instanced = new THREE.InstancedMesh(triangle, createRenderMaterial(), count)
 
   instanced.geometry.setAttribute('aRef', new THREE.InstancedBufferAttribute(new Float32Array(uvs), 2))
@@ -1056,6 +979,14 @@ function buildSimulation(res) {
 
   scene.add(instanced)
   renderMesh = instanced
+  splineStates = seeds.map(createSplineState)
+  const points = createSharedSplinePoints()
+  sharedSpline = {
+    points,
+    progress: Math.min(7, points.length - 5),
+    speed: effectivePathSpeed.value,
+    baseSpeed: effectivePathSpeed.value,
+  }
 }
 
 function fillPositionTexture(texture, bounds, seeds) {
@@ -1194,20 +1125,18 @@ function positionShader() {
 function createRenderMaterial() {
   return new THREE.RawShaderMaterial({
     uniforms: {
-      uPosition: { value: null },
       uColorA: { value: new THREE.Color() },
       uColorB: { value: new THREE.Color() },
-      uSizeMin: { value: sizeMin.value },
-      uSizeMax: { value: sizeMax.value },
+      uSizeMin: { value: effectiveSizeMin.value },
+      uSizeMax: { value: effectiveSizeMax.value },
     },
     vertexShader: /* glsl */`
       precision highp float;
       attribute vec3 position;
-      attribute vec2 aRef;
       attribute float aSeed;
+      attribute mat4 instanceMatrix;
       uniform mat4 projectionMatrix;
       uniform mat4 modelViewMatrix;
-      uniform sampler2D uPosition;
       uniform float uSizeMin;
       uniform float uSizeMax;
       varying float vSeed;
@@ -1217,27 +1146,12 @@ function createRenderMaterial() {
 
       
       void main() {
-        vec4 posTex = texture2D(uPosition, aRef);
-        vec2 worldPos = posTex.xy;
-
-        // size per instance
         float size = uSizeMin + (uSizeMax - uSizeMin) * aSeed;
-        vec2 localPos = position.xy * size;
         vSize = size;
-
-        // random angle per instance based on aSeed
-        float angle = aSeed * 6.28318530718; // 2π
-        float c = cos(angle);
-        float s = sin(angle);
-        mat2 rot = mat2(c, -s,
-                        s,  c);
-
-        vec2 rotated = rot * localPos;
-
-        vec3 finalPos = vec3(worldPos + rotated, 0.0);
         vSeed = aSeed;
         vBarycentric = aBarycentric;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPos, 1.0);
+        vec4 worldPosition = instanceMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * modelViewMatrix * worldPosition;
       }
 
     `,
@@ -1277,47 +1191,81 @@ function createRenderMaterial() {
 }
 
 function animate() {
-  const dt = clock.getDelta()
+  const dt = Math.min(clock.getDelta(), 0.05)
 
-  if (gpuCompute && velVar && posVar) {
-    // update GPU uniforms from UI every frame
-    velVar.material.uniforms.uTime.value = clock.elapsedTime
-    velVar.material.uniforms.uDelta.value = dt
-    posVar.material.uniforms.uDelta.value = dt
+  if (renderMesh && sharedSpline) {
+    const matrix = new THREE.Matrix4()
+    const position = new THREE.Vector3()
+    const rotation = new THREE.Quaternion()
+    const scale = new THREE.Vector3()
+    const axis = new THREE.Vector3(0, 0, 1)
 
-    if (hasPointer.value && mouseEnabled.value) {
-      velVar.material.uniforms.uMouse.value.set(mouse.x, mouse.y, 0)
-    } else {
-      // push it far away so it doesn't affect anything
-      velVar.material.uniforms.uMouse.value.set(9999, 9999, 0)
+    const leader = splinePoint(sharedSpline.points, sharedSpline.progress)
+    const leaderAhead = splinePoint(sharedSpline.points, sharedSpline.progress + 0.01)
+    const leaderTangent = leaderAhead.clone().sub(leader).normalize()
+    sharedSpline.baseSpeed = effectivePathSpeed.value
+    const targetSpeed = sharedSpline.baseSpeed * (
+      1 + Math.max(0, -leaderTangent.y) * gravityEffect.value
+      - Math.max(0, leaderTangent.y) * gravityEffect.value * 0.5
+    )
+    sharedSpline.speed += (targetSpeed - sharedSpline.speed) * (1 - Math.exp(-0.65 * dt))
+    const pixelsPerProgress = Math.max(20, leader.distanceTo(leaderAhead) * 100)
+    sharedSpline.progress += sharedSpline.speed * dt / pixelsPerProgress
+
+    while (sharedSpline.points.length - 3 - sharedSpline.progress < 5) {
+      sharedSpline.points.push(createNextSplinePoint(sharedSpline.points))
     }
 
-    gpuCompute.compute()
-
-    const posTex = gpuCompute.getCurrentRenderTarget(posVar).texture
-    if (renderMesh) {
-      renderMesh.material.uniforms.uPosition.value = posTex
-
-      // colors & sizes from your UI
-      const ca = hsvToRgb(colorA.h, colorA.s, colorA.v)
-      const cb = hsvToRgb(colorB.h, colorB.s, colorB.v)
-      renderMesh.material.uniforms.uColorA.value.set(ca.r, ca.g, ca.b)
-      renderMesh.material.uniforms.uColorB.value.set(cb.r, cb.g, cb.b)
-      renderMesh.material.uniforms.uSizeMin.value = Math.min(sizeMin.value, sizeMax.value)
-      renderMesh.material.uniforms.uSizeMax.value = Math.max(sizeMin.value, sizeMax.value)
+    const pointSpacing = 0.52 * trainSpread.value
+    let tailProgress = sharedSpline.progress - (splineStates.length - 1) * pointSpacing
+    while (tailProgress > 2.5 && sharedSpline.points.length > pathPointCount.value) {
+      sharedSpline.points.shift()
+      sharedSpline.progress -= 1
+      tailProgress -= 1
     }
-    if (postMesh) {
-      const bgA = new THREE.Vector3(colorA.h / 360, colorA.s, colorA.v)
-      const bgB = new THREE.Vector3(colorB.h / 360, colorB.s, colorB.v)
 
-      const tA = new THREE.Vector3(textColorA.h / 360, textColorA.s, textColorA.v)
-      const tB = new THREE.Vector3(textColorB.h / 360, textColorB.s, textColorB.v)
+    splineStates.forEach((state, index) => {
+      const progress = Math.max(0, sharedSpline.progress - index * pointSpacing)
+      const here = splinePoint(sharedSpline.points, progress)
+      const ahead = splinePoint(sharedSpline.points, progress + 0.01)
+      const tangent = ahead.clone().sub(here).normalize()
+      const response = rotationLag.value * (
+        0.7 + (1 - state.size / effectiveSizeMax.value) * 0.6
+      )
 
-      postMesh.material.uniforms.uBgHSV_A.value.copy(bgA)
-      postMesh.material.uniforms.uBgHSV_B.value.copy(bgB)
-      postMesh.material.uniforms.uTextHSV_A.value.copy(tA)
-      postMesh.material.uniforms.uTextHSV_B.value.copy(tB)
-    }
+      const targetAngle = Math.atan2(tangent.y, tangent.x) - Math.PI / 2
+      const angleDelta = Math.atan2(
+        Math.sin(targetAngle - state.angle),
+        Math.cos(targetAngle - state.angle)
+      )
+      state.angle += angleDelta * (1 - Math.exp(-response * dt))
+
+      position.set(here.x, here.y, 0)
+      rotation.setFromAxisAngle(axis, state.angle)
+      scale.set(state.size, state.size, 1)
+      matrix.compose(position, rotation, scale)
+      renderMesh.setMatrixAt(index, matrix)
+    })
+    renderMesh.instanceMatrix.needsUpdate = true
+
+    const ca = hsvToRgb(colorA.h, colorA.s, colorA.v)
+    const cb = hsvToRgb(colorB.h, colorB.s, colorB.v)
+    renderMesh.material.uniforms.uColorA.value.set(ca.r, ca.g, ca.b)
+    renderMesh.material.uniforms.uColorB.value.set(cb.r, cb.g, cb.b)
+    renderMesh.material.uniforms.uSizeMin.value = effectiveSizeMin.value
+    renderMesh.material.uniforms.uSizeMax.value = effectiveSizeMax.value
+  }
+
+  if (postMesh) {
+    const bgA = new THREE.Vector3(colorA.h / 360, colorA.s, colorA.v)
+    const bgB = new THREE.Vector3(colorB.h / 360, colorB.s, colorB.v)
+    const tA = new THREE.Vector3(textColorA.h / 360, textColorA.s, textColorA.v)
+    const tB = new THREE.Vector3(textColorB.h / 360, textColorB.s, textColorB.v)
+
+    postMesh.material.uniforms.uBgHSV_A.value.copy(bgA)
+    postMesh.material.uniforms.uBgHSV_B.value.copy(bgB)
+    postMesh.material.uniforms.uTextHSV_A.value.copy(tA)
+    postMesh.material.uniforms.uTextHSV_B.value.copy(tB)
   }
 
   // PASS 1: render squares to offscreen
@@ -1349,11 +1297,15 @@ function onResize() {
   camera.updateProjectionMatrix()
 
   bounds.set(w / 2, h / 2)
-  if (velVar) {
-    velVar.material.uniforms.uBounds.value.set(bounds.x, bounds.y)
-  }
-  if (posVar) {
-    posVar.material.uniforms.uBounds.value.set(bounds.x, bounds.y)
+  viewportScale.value = clamp(0.25, Math.min(w / 1280, h / 800), 1)
+  splineStates.forEach(state => {
+    state.size = effectiveSizeMin.value
+      + (effectiveSizeMax.value - effectiveSizeMin.value) * state.seed
+  })
+  if (renderMesh && sharedSpline) {
+    const points = createSharedSplinePoints(sharedSpline.points.length)
+    sharedSpline.points = points
+    sharedSpline.progress = Math.min(7, points.length - 5)
   }
   loadSvgAsTexture(img, w, h)
 }
@@ -1398,11 +1350,8 @@ watch(sizeMin, (val) => {
 watch(sizeMax, (val) => {
   if (val < sizeMin.value) sizeMin.value = val
 })
-watch(massMin, (val) => {
-  if (val > massMax.value) massMax.value = val
-})
-watch(massMax, (val) => {
-  if (val < massMin.value) massMin.value = val
+watch([sizeMin, sizeMax, pathPointCount], () => {
+  if (renderer && scene) buildSimulation(squareRes.value)
 })
 </script>
 
@@ -1414,9 +1363,8 @@ watch(massMax, (val) => {
 }
 
 .control-panel {
-  display: none;
   position: absolute;
-  top: 1rem;
+  top: 3.7rem;
   right: 1rem;
   background: rgba(12, 14, 16, 0.85);
   backdrop-filter: blur(10px);
@@ -1424,9 +1372,27 @@ watch(massMax, (val) => {
   border-radius: 0.75rem;
   padding: 1rem;
   max-width: 280px;
+  max-height: calc(100dvh - 5rem);
+  overflow-y: auto;
   color: #f5f5f5;
   font-size: 0.8rem;
   pointer-events: auto;
+  z-index: 1300;
+}
+
+.control-toggle {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1301;
+  border: 0;
+  border-bottom: 1px solid rgba(35, 72, 57, 0.35);
+  border-radius: 0;
+  background: transparent;
+  color: #173b2b;
+  padding: 0.25rem 0;
+  cursor: pointer;
+  font-family: "Space Grotesk", sans-serif;
 }
 
 .control-panel section {
@@ -1435,7 +1401,8 @@ watch(massMax, (val) => {
 
 .control-panel h3 {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: -0.03em;
   margin-bottom: 0.25rem;
   opacity: 0.9;
 }
@@ -1486,29 +1453,32 @@ watch(massMax, (val) => {
 }
 
 .top-bar button {
-  background: rgba(10, 10, 10, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  color: #234839;
 
   /* padding scales with width */
-  padding: clamp(0.3rem, 0.1rem + 0.4vw, 0.4rem)
-           clamp(0.6rem, 0.3rem + 0.7vw, 0.9rem);
+  padding: 0.2rem 0.1rem;
 
   cursor: pointer;
 
   /* font size scales with width */
-  font-size: clamp(1.0rem, 0.8rem + 0.8vw, 1.7rem);
-  font-family: "Baloo 2", sans-serif;
+  font-size: clamp(0.82rem, 0.74rem + 0.35vw, 1.15rem);
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.035em;
 }
 
 .top-bar button:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: transparent;
+  border-bottom-color: rgba(35, 72, 57, 0.35);
 }
 
 .top-bar button.active {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.7);
-  color: #fff;
+  background: transparent;
+  border-bottom-color: #173b2b;
+  color: #173b2b;
 }
 
 .research-list {
@@ -1548,7 +1518,9 @@ watch(massMax, (val) => {
 
 .research-text h3 {
   margin: 0 0 0.2rem;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
+  font-weight: 500;
+  letter-spacing: -0.035em;
 }
 
 .research-text p {
@@ -1662,20 +1634,20 @@ watch(massMax, (val) => {
   width: 100%;
   height: auto;           /* behoud verhouding */
   aspect-ratio: 1 / 1;    /* vierkant houden */
-  filter: brightness(0) invert(1);
+  filter: brightness(0) saturate(100%) invert(21%) sepia(18%) saturate(1240%) hue-rotate(105deg) brightness(91%);
   transition: filter 0.2s ease-in-out;
 }
 
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(3, 5, 8, 0.1);
+  background: rgba(248, 252, 248, 0.76);
   backdrop-filter: blur(32px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 999; /* above canvas and control panel */
-  font-family: "Baloo 2", sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   transition: opacity 0.2s ease;
 }
 
@@ -1691,10 +1663,16 @@ watch(massMax, (val) => {
   /* border: 1px solid rgba(255, 255, 255, 0.04); */
   /* border-radius: 1rem; */
   padding: 1rem;
-  color: #fff;
+  color: #234839;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.overlay-content h2,
+.overlay-content h3 {
+  font-weight: 500;
+  letter-spacing: -0.035em;
 }
 
 .overlay-header {
@@ -1707,7 +1685,7 @@ watch(massMax, (val) => {
 .overlay-close {
   background: transparent;
   border: none;
-  color: #fff;
+  color: #234839;
   font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
