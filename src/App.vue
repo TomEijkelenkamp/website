@@ -813,11 +813,12 @@ function initThree() {
   const el = container.value
   const w = el.clientWidth
   const h = el.clientHeight
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
   viewportScale.value = clamp(0.25, Math.min(w / 1280, h / 800), 1)
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  renderer.setPixelRatio(dpr)
   renderer.setSize(w, h)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.setClearColor(0xfbfdf9, 1)
   el.appendChild(renderer.domElement)
 
@@ -830,10 +831,15 @@ function initThree() {
 
   clock = new THREE.Clock()
 
-  simRenderTarget = new THREE.WebGLRenderTarget(w, h, {
-    depthBuffer: false,
-    stencilBuffer: false,
-  })
+  simRenderTarget = new THREE.WebGLRenderTarget(
+    Math.round(w * dpr),
+    Math.round(h * dpr),
+    {
+      depthBuffer: false,
+      stencilBuffer: false,
+    }
+  )
+  simRenderTarget.samples = 4
 
   // // make text texture once
   // textTexture = createTextTexture("Tom Eijkelenkamp\nArtist | Graphics | Algorithmic Design", 3840, 2160)
@@ -1173,7 +1179,7 @@ function createRenderMaterial() {
         float baseWidth = 1.0; // tune
 
         // Inverse relationship: larger size → smaller smoothing region
-        float width = baseWidth / max(vSize, 0.0001);
+        float width = 0.75 / max(vSize, 0.0001);
 
         // Prevent extreme values
         // width = clamp(width, 0.01, 0.15);
@@ -1286,8 +1292,11 @@ function onResize() {
   if (!container.value) return
   const w = container.value.clientWidth
   const h = container.value.clientHeight
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
 
+  renderer.setPixelRatio(dpr)
   renderer.setSize(w, h)
+  simRenderTarget?.setSize(Math.round(w * dpr), Math.round(h * dpr))
   camera.left = -w / 2
   camera.right = w / 2
   camera.top = h / 2
@@ -1685,6 +1694,207 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   overflow-y: auto;
   max-height: 60vh;
   font-size: 0.85rem;
+}
+
+/* Balanced portfolio layouts */
+.overlay-content {
+  width: min(88vw, 1120px);
+  max-height: 82vh;
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+
+.overlay-body {
+  max-height: 72vh;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(35, 72, 57, 0.25) transparent;
+}
+
+.research-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1.25rem, 2.5vw, 2.5rem);
+}
+
+.research-item {
+  display: grid;
+  grid-template-columns: clamp(112px, 11vw, 152px) minmax(0, 1fr);
+  gap: clamp(0.8rem, 1.5vw, 1.25rem);
+}
+
+.research-image {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 3 / 4;
+}
+
+.research-image img {
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.research-text {
+  max-width: 34rem;
+}
+
+.research-text h3 {
+  margin-bottom: 0.45rem;
+  font-size: clamp(0.9rem, 0.82rem + 0.18vw, 1.05rem);
+}
+
+.research-text p {
+  font-size: clamp(0.78rem, 0.74rem + 0.12vw, 0.9rem);
+  line-height: 1.55;
+  opacity: 0.78;
+}
+
+.research-item.no-image {
+  display: block;
+  padding-left: clamp(0.75rem, 2vw, 1.25rem);
+  border-left: 1px solid rgba(35, 72, 57, 0.14);
+}
+
+.animation-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: clamp(0.75rem, 1.6vw, 1.5rem);
+}
+
+.animation-thumb {
+  max-width: none;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  background: rgba(35, 72, 57, 0.05);
+}
+
+.animation-thumb img,
+.dance-image-wrapper img {
+  transition: transform 0.35s ease;
+}
+
+.animation-item:hover img,
+.dance-item:hover img {
+  transform: scale(1.025);
+}
+
+.animation-item:first-child .animation-thumb img {
+  transform: scale(1.045);
+}
+
+.animation-item:first-child:hover .animation-thumb img {
+  transform: scale(1.065);
+}
+
+.dance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2.5vw, 2.5rem);
+}
+
+.dance-item {
+  min-width: 0;
+  max-width: none;
+}
+
+.dance-image-wrapper {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  background: rgba(35, 72, 57, 0.05);
+}
+
+.dance-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.me-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 3vw, 2.25rem);
+  min-height: min(38vh, 320px);
+}
+
+.me-text .me-image-wrapper {
+  width: clamp(110px, 14vw, 160px);
+}
+
+.me-text .social-buttons {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.8rem, 2vw, 1.25rem);
+  padding-bottom: 0.25rem;
+}
+
+.me-text .social-buttons a {
+  display: flex;
+  width: clamp(28px, 3vw, 38px);
+  height: clamp(28px, 3vw, 38px);
+  opacity: 0.72;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.me-text .social-buttons a:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.me-text .social-buttons .icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 760px) {
+  .overlay {
+    align-items: flex-start;
+    padding-top: 4.25rem;
+  }
+
+  .overlay-content {
+    width: calc(100vw - 2rem);
+    max-height: calc(100dvh - 5.25rem);
+    padding: 0.5rem;
+  }
+
+  .overlay-body {
+    max-height: calc(100dvh - 6.25rem);
+  }
+
+  .research-list,
+  .dance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .research-item {
+    grid-template-columns: 105px minmax(0, 1fr);
+  }
+
+  .animation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .me-text {
+    min-height: calc(100dvh - 6.25rem);
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .me-text .me-image-wrapper {
+    width: clamp(92px, 30vw, 125px);
+  }
+
+  .me-text .social-buttons {
+    gap: 0.65rem;
+  }
+
+  .me-text .social-buttons a {
+    width: 27px;
+    height: 27px;
+  }
 }
 
 .overlay.prewarm {
