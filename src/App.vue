@@ -520,6 +520,8 @@ let simRenderTarget   // offscreen render of squares
 let postScene         // scene for the post / screen quad
 let postMesh          // the quad
 let textTexture       // canvas text
+let resizeObserver
+let textFontReady = false
 function createTextTexture(
   text = "HELLO\nWORLD",
   width = 1024,
@@ -837,6 +839,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   cancelAnimationFrame(animationId)
+  resizeObserver?.disconnect()
   window.removeEventListener('resize', onResize)
   window.removeEventListener('pointermove', onPointerMove)
   window.removeEventListener('keydown', onKeyDown)
@@ -852,8 +855,8 @@ img.src = "/svg/normal.svg"
 
 function initThree() {
   const el = container.value
-  const w = el.clientWidth
-  const h = el.clientHeight
+  const w = Math.max(1, el.clientWidth || window.innerWidth)
+  const h = Math.max(1, el.clientHeight || window.innerHeight)
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
   viewportScale.value = clamp(0.25, Math.min(w / 1280, h / 800), 1)
 
@@ -882,16 +885,23 @@ function initThree() {
   )
   simRenderTarget.samples = 4
 
-  // // make text texture once
-  // textTexture = createTextTexture("Tom Eijkelenkamp\nArtist | Graphics | Algorithmic Design", 3840, 2160)
+  // Keep the text hidden until both Space Grotesk weights are really loaded.
+  // Until then the animation loop renders the triangles directly.
   Promise.all([
     document.fonts.load('500 48px "Space Grotesk"'),
     document.fonts.load('400 24px "Space Grotesk"'),
-  ]).then(() => {
-    loadSvgAsTexture(img, w, h)
-  })
+  ]).then(([titleFaces, subtitleFaces]) => {
+    if (!titleFaces.length || !subtitleFaces.length) return
+    if (!container.value || !renderer) return
+    textFontReady = true
+    const currentWidth = Math.max(1, container.value.clientWidth || window.innerWidth)
+    const currentHeight = Math.max(1, container.value.clientHeight || window.innerHeight)
+    loadSvgAsTexture(img, currentWidth, currentHeight)
+  }).catch(() => {})
 
   window.addEventListener('resize', onResize)
+  resizeObserver = new ResizeObserver(onResize)
+  resizeObserver.observe(el)
   window.addEventListener('pointermove', onPointerMove)
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('pointerdown', () => { mouseEnabled.value = true })
@@ -1318,11 +1328,14 @@ function animate() {
   renderer.clear()
   renderer.render(scene, camera)
 
-  // PASS 2: render post quad to screen
+  // PASS 2: always return to the visible canvas. If the text composition is
+  // not ready yet, show the triangle scene directly instead of a blank frame.
+  renderer.setRenderTarget(null)
+  renderer.clear()
   if (postScene) {
-    renderer.setRenderTarget(null)
-    renderer.clear()
     renderer.render(postScene, camera)
+  } else {
+    renderer.render(scene, camera)
   }
 
   animationId = requestAnimationFrame(animate)
@@ -1330,9 +1343,9 @@ function animate() {
 
 
 function onResize() {
-  if (!container.value) return
-  const w = container.value.clientWidth
-  const h = container.value.clientHeight
+  if (!container.value || !renderer || !camera) return
+  const w = Math.max(1, container.value.clientWidth || window.innerWidth)
+  const h = Math.max(1, container.value.clientHeight || window.innerHeight)
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
 
   renderer.setPixelRatio(dpr)
@@ -1355,7 +1368,7 @@ function onResize() {
     sharedSpline.points = points
     sharedSpline.progress = Math.min(7, points.length - 5)
   }
-  loadSvgAsTexture(img, w, h)
+  if (textFontReady) loadSvgAsTexture(img, w, h)
 }
 
 function onPointerMove(e) {
