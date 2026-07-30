@@ -62,6 +62,7 @@
             v-for="item in animationItems"
             :key="item.id"
             class="animation-item"
+            :class="{ 'animation-item--edge-crop': item.cropRightEdge }"
             @click="openExternal(item.url)"
           >
             <div class="animation-thumb">
@@ -337,39 +338,58 @@ const researchItems = ref([
 const animationItems = ref([
   {
     id: 1,
-    title: 'Dance piece – fragment 1',
-    url: 'https://www.instagram.com/p/DHDockUOp5g/',
-    thumbnail: '/animation/dance.jpg', // from script
+    title: 'Painted movement study',
+    url: 'https://www.instagram.com/p/DUnz5v3CMAQ/?img_index=1',
+    thumbnail: '/animation/painted-figure.png',
   },
   {
     id: 2,
+    title: 'Organic forms study',
+    url: 'https://www.instagram.com/p/DSiKhPzjgQt/',
+    thumbnail: '/animation/pink-forms.jpg',
+  },
+  {
+    id: 3,
+    title: 'Animated landscape study',
+    url: 'https://www.instagram.com/p/DR9VvVnDh_e/',
+    thumbnail: '/animation/purple-landscape.jpg',
+  },
+  {
+    id: 4,
     title: 'Generative art experiment 2',
     url: 'https://www.instagram.com/p/DRK6Hf5jnfd/',
     thumbnail: '/animation/flux.jpg',
   },
   {
-    id: 3,
-    title: 'Projection + movement test',
-    url: 'https://www.instagram.com/p/DKO7ZbPs9O6/',
-    thumbnail: '/animation/fire.png',
-  },
-  {
-    id: 4,
+    id: 5,
     title: 'Light play study',
     url: 'https://www.instagram.com/p/DN2zWV93JW0/',
     thumbnail: '/animation/matrix.jpg',
   },
   {
-    id: 5,
+    id: 6,
     title: 'Generative art experiment',
     url: 'https://www.instagram.com/p/DMkLJEeu8YD/',
     thumbnail: '/animation/moon.png',
   },
   {
-    id: 6,
+    id: 7,
+    title: 'Projection + movement test',
+    url: 'https://www.instagram.com/p/DKO7ZbPs9O6/',
+    thumbnail: '/animation/fire.png',
+  },
+  {
+    id: 8,
     title: 'Algorithmic art piece',
     url: 'https://www.instagram.com/p/DKMJjqQITft/',
     thumbnail: '/animation/creature.png',
+  },
+  {
+    id: 9,
+    title: 'Dance piece – fragment 1',
+    url: 'https://www.instagram.com/p/DHDockUOp5g/',
+    thumbnail: '/animation/dance.jpg', // from script
+    cropRightEdge: true,
   },
 ])
 
@@ -435,8 +455,8 @@ const squareRes = ref(3) // 3x3 = 9 triangles
 
 const colorA = reactive({ h: 109, s: 0.09, v: 0.96 })
 const colorB = reactive({ h: 119, s: 0.37, v: 0.92 })
-const textColorA = reactive({ h: 258, s: 0.43, v: 0.74 })
-const textColorB = reactive({ h: 238, s: 0.22, v: 0.42 })
+const textColorA = reactive({ h: 258, s: 0.91, v: 0.54 })
+const textColorB = reactive({ h: 238, s: 0.70, v: 1.00 })
 
 const sizeMin = ref(18)
 const sizeMax = ref(460)
@@ -699,8 +719,18 @@ function createPostMaterial(simTex, textTex, screenSize) {
         ));
         float coverage = smoothstep(0.012, 0.040, shapeSignal);
 
-        // Make the letters visibly react whenever a triangle passes behind them.
-        vec3 textHSV = mix(uTextHSV_A, uTextHSV_B, coverage);
+        // React to brightness rather than hue or saturation: the text stays
+        // dark on the pale paper and becomes lighter as the shape behind it
+        // gets darker.
+        float paperValue = 0.992;
+        float valueRange = max(paperValue - uBgHSV_B.z, 0.00001);
+        float darkness = clamp(
+          (paperValue - baseHSV.z) / valueRange,
+          0.0,
+          1.0
+        );
+        float lightening = coverage * smoothstep(0.05, 0.85, darkness);
+        vec3 textHSV = mix(uTextHSV_A, uTextHSV_B, lightening);
 
         // 4) Convert to RGB
         vec3 textRGB = hsv2rgb(textHSV);
@@ -1775,11 +1805,11 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   transform: scale(1.025);
 }
 
-.animation-item:first-child .animation-thumb img {
+.animation-item--edge-crop .animation-thumb img {
   transform: scale(1.045);
 }
 
-.animation-item:first-child:hover .animation-thumb img {
+.animation-item--edge-crop:hover .animation-thumb img {
   transform: scale(1.065);
 }
 
