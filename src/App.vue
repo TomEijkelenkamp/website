@@ -122,10 +122,6 @@
       </div>
     </div>
 
-    <button class="control-toggle" @click="controlPanelOpen = !controlPanelOpen">
-      {{ controlPanelOpen ? 'Close controls' : 'Controls' }}
-    </button>
-
     <div v-show="controlPanelOpen" class="control-panel">
       <section>
         <label>
@@ -802,6 +798,7 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(animationId)
   window.removeEventListener('resize', onResize)
   window.removeEventListener('pointermove', onPointerMove)
+  window.removeEventListener('keydown', onKeyDown)
   renderer?.dispose()
 })
 
@@ -849,6 +846,7 @@ function initThree() {
 
   window.addEventListener('resize', onResize)
   window.addEventListener('pointermove', onPointerMove)
+  window.addEventListener('keydown', onKeyDown)
   window.addEventListener('pointerdown', () => { mouseEnabled.value = true })
   window.addEventListener('pointerup', () => { mouseEnabled.value = false })
 }
@@ -1322,6 +1320,13 @@ function onPointerMove(e) {
   hasPointer.value = true
 }
 
+function onKeyDown(e) {
+  if (e.altKey && e.key.toLowerCase() === 'c') {
+    e.preventDefault()
+    controlPanelOpen.value = !controlPanelOpen.value
+  }
+}
+
 // HSV helpers
 function hsvToRgb(h, s, v) {
   const c = v * s
@@ -1378,21 +1383,6 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   font-size: 0.8rem;
   pointer-events: auto;
   z-index: 1300;
-}
-
-.control-toggle {
-  position: absolute;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1301;
-  border: 0;
-  border-bottom: 1px solid rgba(35, 72, 57, 0.35);
-  border-radius: 0;
-  background: transparent;
-  color: #173b2b;
-  padding: 0.25rem 0;
-  cursor: pointer;
-  font-family: "Space Grotesk", sans-serif;
 }
 
 .control-panel section {
