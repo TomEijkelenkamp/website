@@ -63,10 +63,36 @@
             :key="item.id"
             class="animation-item"
             :class="{ 'animation-item--edge-crop': item.cropRightEdge }"
-            @click="openExternal(item.url)"
+            tabindex="0"
+            :aria-label="`${item.title} afspelen`"
+            @mouseenter="startAnimation(item)"
+            @mouseleave="stopAnimation(item.id)"
+            @focusin="startAnimation(item)"
+            @focusout="stopAnimation(item.id)"
+            @click="toggleAnimation(item)"
           >
             <div class="animation-thumb">
-              <img :src="item.thumbnail" :alt="item.title" />
+              <img
+                :src="item.thumbnail"
+                :alt="item.title"
+                :class="{ 'is-video-playing': playingAnimationId === item.id }"
+              />
+              <video
+                v-show="activeAnimationId === item.id"
+                :ref="el => setAnimationVideoRef(el, item.id)"
+                :src="activeAnimationId === item.id ? activeAnimationSource(item) : undefined"
+                :class="{ 'is-playing': playingAnimationId === item.id }"
+                :poster="item.thumbnail"
+                muted
+                playsinline
+                disablepictureinpicture
+                disableremoteplayback
+                controlslist="nodownload noremoteplayback"
+                x-webkit-airplay="deny"
+                preload="none"
+                @playing="markAnimationPlaying(item.id)"
+                @ended="advanceAnimation(item)"
+              />
             </div>
           </article>
         </div>
@@ -351,57 +377,129 @@ const animationItems = ref([
     title: 'Painted movement study',
     url: 'https://www.instagram.com/p/DUnz5v3CMAQ/?img_index=1',
     thumbnail: '/animation/painted-figure.png',
+    videos: ['/animation/videos/painted-figure-01.mp4', '/animation/videos/painted-figure-02.mp4'],
   },
   {
     id: 2,
     title: 'Organic forms study',
     url: 'https://www.instagram.com/p/DSiKhPzjgQt/',
     thumbnail: '/animation/pink-forms.jpg',
+    videos: ['/animation/videos/organic-forms-01.mp4'],
   },
   {
     id: 3,
     title: 'Animated landscape study',
     url: 'https://www.instagram.com/p/DR9VvVnDh_e/',
     thumbnail: '/animation/purple-landscape.jpg',
+    videos: ['/animation/videos/animated-landscape-01.mp4'],
   },
   {
     id: 4,
     title: 'Generative art experiment 2',
     url: 'https://www.instagram.com/p/DRK6Hf5jnfd/',
     thumbnail: '/animation/flux.jpg',
+    videos: ['/animation/videos/generative-art-2-01.mp4'],
   },
   {
     id: 5,
     title: 'Light play study',
     url: 'https://www.instagram.com/p/DN2zWV93JW0/',
     thumbnail: '/animation/matrix.jpg',
+    videos: ['/animation/videos/light-play-01.mp4'],
   },
   {
     id: 6,
     title: 'Generative art experiment',
     url: 'https://www.instagram.com/p/DMkLJEeu8YD/',
     thumbnail: '/animation/moon.png',
+    videos: ['/animation/videos/generative-art-01.mp4'],
   },
   {
     id: 7,
     title: 'Projection + movement test',
     url: 'https://www.instagram.com/p/DKO7ZbPs9O6/',
     thumbnail: '/animation/fire.png',
+    videos: ['/animation/videos/projection-movement-01.mp4'],
   },
   {
     id: 8,
     title: 'Algorithmic art piece',
     url: 'https://www.instagram.com/p/DKMJjqQITft/',
     thumbnail: '/animation/creature.png',
+    videos: ['/animation/videos/algorithmic-art-02.mp4'],
   },
   {
     id: 9,
     title: 'Dance piece – fragment 1',
     url: 'https://www.instagram.com/p/DHDockUOp5g/',
     thumbnail: '/animation/dance.jpg', // from script
+    videos: ['/animation/videos/dance-fragment-01.mp4'],
     cropRightEdge: true,
   },
 ])
+
+const activeAnimationId = ref(null)
+const playingAnimationId = ref(null)
+const animationIndexes = reactive({})
+const animationVideoRefs = new Map()
+
+function setAnimationVideoRef(element, id) {
+  if (element) animationVideoRefs.set(id, element)
+  else animationVideoRefs.delete(id)
+}
+
+function activeAnimationSource(item) {
+  const index = animationIndexes[item.id] || 0
+  return item.videos[index]
+}
+
+async function playActiveAnimation(item) {
+  await nextTick()
+  const video = animationVideoRefs.get(item.id)
+  if (!video) return
+  video.load()
+  video.play().catch(() => {})
+}
+
+function startAnimation(item) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+  if (activeAnimationId.value !== item.id) {
+    stopAnimation(activeAnimationId.value)
+    playingAnimationId.value = null
+    animationIndexes[item.id] = animationIndexes[item.id] || 0
+    activeAnimationId.value = item.id
+  }
+
+  playActiveAnimation(item)
+}
+
+function stopAnimation(id) {
+  if (id == null) return
+  const video = animationVideoRefs.get(id)
+  if (video) {
+    video.pause()
+    video.currentTime = 0
+  }
+  if (playingAnimationId.value === id) playingAnimationId.value = null
+  if (activeAnimationId.value === id) activeAnimationId.value = null
+}
+
+function markAnimationPlaying(id) {
+  if (activeAnimationId.value === id) playingAnimationId.value = id
+}
+
+function toggleAnimation(item) {
+  if (window.matchMedia('(hover: hover)').matches) return
+  if (activeAnimationId.value === item.id) stopAnimation(item.id)
+  else startAnimation(item)
+}
+
+function advanceAnimation(item) {
+  const currentIndex = animationIndexes[item.id] || 0
+  animationIndexes[item.id] = (currentIndex + 1) % item.videos.length
+  playActiveAnimation(item)
+}
 
 // if your dance images are inline in the template, you can define them here:
 const danceImageUrls = [
@@ -1609,10 +1707,12 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   max-width: 180px;   /* adjust to what looks good */
   height: 235px;  /* adjust to what looks good */
   width: 100%;
+  position: relative;
   /* height: 100%; */
 }
 
-.animation-thumb img {
+.animation-thumb img,
+.animation-thumb video {
   display: block;
   width: 100%;
   height: 100%;
@@ -1620,6 +1720,22 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   /* height: auto; */
   object-fit: cover;
   object-position: center;    /* crop from center (important!) */
+  transition: opacity 0.22s ease, transform 0.35s ease;
+}
+
+.animation-thumb video {
+  background: #000;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.animation-thumb video.is-playing {
+  opacity: 1;
+}
+
+.animation-thumb img.is-video-playing {
+  opacity: 0;
 }
 
 .animation-caption {
@@ -1820,8 +1936,9 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 }
 
 .animation-thumb img,
+.animation-thumb video,
 .dance-image-wrapper img {
-  transition: transform 0.35s ease;
+  transition: opacity 0.22s ease, transform 0.35s ease;
 }
 
 .animation-item:hover img,
@@ -1830,6 +1947,10 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 }
 
 .animation-item--edge-crop .animation-thumb img {
+  transform: scale(1.045);
+}
+
+.animation-item--edge-crop .animation-thumb video {
   transform: scale(1.045);
 }
 
