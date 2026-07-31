@@ -67,9 +67,10 @@
             :aria-label="`${item.title} afspelen`"
             @mouseenter="startAnimation(item)"
             @mouseleave="stopAnimation(item.id)"
+            @pointerdown="markAnimationPointerInput"
             @focusin="startAnimationFromFocus(item, $event)"
             @focusout="stopAnimation(item.id)"
-            @click="startAnimation(item)"
+            @click="toggleAnimation(item)"
           >
             <div class="animation-thumb">
               <img
@@ -377,7 +378,7 @@ const animationItems = ref([
     title: 'Painted movement study',
     url: 'https://www.instagram.com/p/DUnz5v3CMAQ/?img_index=1',
     thumbnail: '/animation/painted-figure.png',
-    videos: ['/animation/videos/painted-figure-01.mp4', '/animation/videos/painted-figure-02.mp4'],
+    videos: ['/animation/videos/painted-figure-01.mp4'],
   },
   {
     id: 2,
@@ -443,6 +444,7 @@ const playingAnimationId = ref(null)
 const startingAnimationId = ref(null)
 const animationIndexes = reactive({})
 const animationVideoRefs = new Map()
+let lastAnimationPointerAt = -Infinity
 
 function setAnimationVideoRef(element, id) {
   if (element) animationVideoRefs.set(id, element)
@@ -503,7 +505,20 @@ function markAnimationPlaying(id) {
 }
 
 function startAnimationFromFocus(item, event) {
-  if (event.currentTarget.matches(':focus-visible')) startAnimation(item)
+  const cameFromPointer = performance.now() - lastAnimationPointerAt < 750
+  if (!cameFromPointer && event.currentTarget.matches(':focus-visible')) {
+    startAnimation(item)
+  }
+}
+
+function markAnimationPointerInput() {
+  lastAnimationPointerAt = performance.now()
+}
+
+function toggleAnimation(item) {
+  if (window.matchMedia('(hover: hover)').matches) return
+  if (activeAnimationId.value === item.id) stopAnimation(item.id)
+  else startAnimation(item)
 }
 
 function advanceAnimation(item) {
