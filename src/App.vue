@@ -69,7 +69,7 @@
             @mouseleave="stopAnimation(item.id)"
             @focusin="startAnimationFromFocus(item, $event)"
             @focusout="stopAnimation(item.id)"
-            @click="toggleAnimation(item)"
+            @click="startAnimation(item)"
           >
             <div class="animation-thumb">
               <img
@@ -440,6 +440,7 @@ const animationItems = ref([
 
 const activeAnimationId = ref(null)
 const playingAnimationId = ref(null)
+const startingAnimationId = ref(null)
 const animationIndexes = reactive({})
 const animationVideoRefs = new Map()
 
@@ -458,11 +459,18 @@ async function playActiveAnimation(item) {
   const video = animationVideoRefs.get(item.id)
   if (!video) return
   video.load()
-  video.play().catch(() => {})
+  video.play().catch(() => {
+    if (startingAnimationId.value === item.id) startingAnimationId.value = null
+  })
 }
 
 function startAnimation(item) {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+  if (
+    activeAnimationId.value === item.id &&
+    (startingAnimationId.value === item.id || playingAnimationId.value === item.id)
+  ) return
 
   if (activeAnimationId.value !== item.id) {
     stopAnimation(activeAnimationId.value)
@@ -471,6 +479,7 @@ function startAnimation(item) {
     activeAnimationId.value = item.id
   }
 
+  startingAnimationId.value = item.id
   playActiveAnimation(item)
 }
 
@@ -481,22 +490,20 @@ function stopAnimation(id) {
     video.pause()
     video.currentTime = 0
   }
+  if (startingAnimationId.value === id) startingAnimationId.value = null
   if (playingAnimationId.value === id) playingAnimationId.value = null
   if (activeAnimationId.value === id) activeAnimationId.value = null
 }
 
 function markAnimationPlaying(id) {
-  if (activeAnimationId.value === id) playingAnimationId.value = id
+  if (activeAnimationId.value === id) {
+    startingAnimationId.value = null
+    playingAnimationId.value = id
+  }
 }
 
 function startAnimationFromFocus(item, event) {
   if (event.currentTarget.matches(':focus-visible')) startAnimation(item)
-}
-
-function toggleAnimation(item) {
-  if (window.matchMedia('(hover: hover)').matches) return
-  if (activeAnimationId.value === item.id) stopAnimation(item.id)
-  else startAnimation(item)
 }
 
 function advanceAnimation(item) {
