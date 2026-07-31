@@ -65,8 +65,8 @@
             :class="{ 'animation-item--edge-crop': item.cropRightEdge }"
             tabindex="0"
             :aria-label="`${item.title} afspelen`"
-            @mouseenter="startAnimation(item)"
-            @mouseleave="stopAnimation(item.id)"
+            @mouseenter="startAnimationFromHover(item)"
+            @mouseleave="stopAnimationFromHover(item.id)"
             @pointerdown="markAnimationPointerInput"
             @focusin="startAnimationFromFocus(item, $event)"
             @focusout="stopAnimation(item.id)"
@@ -509,6 +509,14 @@ function startAnimationFromFocus(item, event) {
   if (!cameFromPointer && event.currentTarget.matches(':focus-visible')) {
     startAnimation(item)
   }
+}
+
+function startAnimationFromHover(item) {
+  if (window.matchMedia('(hover: hover)').matches) startAnimation(item)
+}
+
+function stopAnimationFromHover(id) {
+  if (window.matchMedia('(hover: hover)').matches) stopAnimation(id)
 }
 
 function markAnimationPointerInput() {
