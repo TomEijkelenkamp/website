@@ -67,7 +67,7 @@
             :aria-label="`${item.title} afspelen`"
             @mouseenter="startAnimation(item)"
             @mouseleave="stopAnimation(item.id)"
-            @focusin="startAnimation(item)"
+            @focusin="startAnimationFromFocus(item, $event)"
             @focusout="stopAnimation(item.id)"
             @click="toggleAnimation(item)"
           >
@@ -487,6 +487,10 @@ function stopAnimation(id) {
 
 function markAnimationPlaying(id) {
   if (activeAnimationId.value === id) playingAnimationId.value = id
+}
+
+function startAnimationFromFocus(item, event) {
+  if (event.currentTarget.matches(':focus-visible')) startAnimation(item)
 }
 
 function toggleAnimation(item) {
@@ -983,15 +987,19 @@ function initThree() {
   )
   simRenderTarget.samples = 4
 
-  // Keep the text hidden until both Space Grotesk weights are really loaded.
-  // Until then the animation loop renders the triangles directly.
+  // Always create the text composition immediately. Canvas falls back to a
+  // system sans-serif while Space Grotesk is still loading, so a slow or
+  // blocked font request can never leave the simulation without its title.
+  textFontReady = true
+  loadSvgAsTexture(img, w, h)
+
+  // Redraw once the intended font weights are available.
   Promise.all([
     document.fonts.load('500 48px "Space Grotesk"'),
     document.fonts.load('400 24px "Space Grotesk"'),
   ]).then(([titleFaces, subtitleFaces]) => {
     if (!titleFaces.length || !subtitleFaces.length) return
     if (!container.value || !renderer) return
-    textFontReady = true
     const currentWidth = Math.max(1, container.value.clientWidth || window.innerWidth)
     const currentHeight = Math.max(1, container.value.clientHeight || window.innerHeight)
     loadSvgAsTexture(img, currentWidth, currentHeight)

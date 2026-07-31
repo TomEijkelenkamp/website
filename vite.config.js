@@ -15,4 +15,11 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    watch: {
+      // These files are immutable runtime assets. Ignoring them prevents
+      // OneDrive's sync lock from crashing Vite with EBUSY on Windows.
+      ignored: ['**/public/fonts/**'],
+    },
+  },
 })
