@@ -693,6 +693,8 @@ let postMesh          // the quad
 let textTexture       // canvas text
 let resizeObserver
 let textFontReady = false
+let resumeFrame = null
+let contextRecoveryTimer = null
 function createTextTexture(
   text = "HELLO\nWORLD",
   width = 1024,
@@ -1010,8 +1012,15 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   cancelAnimationFrame(animationId)
+  cancelAnimationFrame(resumeFrame)
+  clearTimeout(contextRecoveryTimer)
   resizeObserver?.disconnect()
   window.removeEventListener('resize', onResize)
+  window.removeEventListener('pageshow', resumeAfterExternalNavigation)
+  window.removeEventListener('focus', resumeAfterExternalNavigation)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  renderer?.domElement.removeEventListener('webglcontextlost', handleWebGLContextLost)
+  renderer?.domElement.removeEventListener('webglcontextrestored', resumeAfterExternalNavigation)
   window.removeEventListener('pointermove', onPointerMove)
   window.removeEventListener('keydown', onKeyDown)
   renderer?.dispose()
@@ -1036,6 +1045,8 @@ function initThree() {
   renderer.setSize(w, h)
   renderer.setClearColor(0xfbfdf9, 1)
   el.appendChild(renderer.domElement)
+  renderer.domElement.addEventListener('webglcontextlost', handleWebGLContextLost)
+  renderer.domElement.addEventListener('webglcontextrestored', resumeAfterExternalNavigation)
 
   scene = new THREE.Scene()
 
@@ -1075,12 +1086,47 @@ function initThree() {
   }).catch(() => {})
 
   window.addEventListener('resize', onResize)
+  window.addEventListener('pageshow', resumeAfterExternalNavigation)
+  window.addEventListener('focus', resumeAfterExternalNavigation)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
   resizeObserver = new ResizeObserver(onResize)
   resizeObserver.observe(el)
   window.addEventListener('pointermove', onPointerMove)
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('pointerdown', () => { mouseEnabled.value = true })
   window.addEventListener('pointerup', () => { mouseEnabled.value = false })
+}
+
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') resumeAfterExternalNavigation()
+}
+
+function handleWebGLContextLost() {
+  cancelAnimationFrame(animationId)
+}
+
+function resumeAfterExternalNavigation() {
+  if (document.visibilityState === 'hidden' || !renderer || !container.value) return
+
+  cancelAnimationFrame(resumeFrame)
+  resumeFrame = requestAnimationFrame(() => {
+    const context = renderer.getContext()
+
+    if (context?.isContextLost()) {
+      clearTimeout(contextRecoveryTimer)
+      contextRecoveryTimer = window.setTimeout(() => {
+        if (renderer?.getContext()?.isContextLost()) window.location.reload()
+      }, 750)
+      return
+    }
+
+    clearTimeout(contextRecoveryTimer)
+    if (!renderer.domElement.isConnected) container.value.appendChild(renderer.domElement)
+    onResize()
+    clock?.getDelta()
+    cancelAnimationFrame(animationId)
+    animationId = requestAnimationFrame(animate)
+  })
 }
 
 let dtPosition // keep reference for mass updates
