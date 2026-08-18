@@ -81,7 +81,7 @@
               <video
                 v-show="activeAnimationId === item.id"
                 :ref="el => setAnimationVideoRef(el, item.id)"
-                :src="activeAnimationId === item.id ? activeAnimationSource(item) : undefined"
+                :src="activeAnimationSource(item)"
                 :class="{ 'is-playing': playingAnimationId === item.id }"
                 :poster="item.thumbnail"
                 muted
@@ -90,7 +90,9 @@
                 disableremoteplayback
                 controlslist="nodownload noremoteplayback"
                 x-webkit-airplay="deny"
-                preload="none"
+                preload="metadata"
+                @canplay="resumeAnimationIfActive(item)"
+                @error="markAnimationStartFailed(item.id)"
                 @playing="markAnimationPlaying(item.id)"
                 @ended="advanceAnimation(item)"
               />
@@ -103,10 +105,15 @@
           <!-- Love letters to robots -->
           <div
             class="dance-item"
+            role="link"
+            tabindex="0"
+            aria-label="Love letters to robots bekijken op YouTube"
             @click="openVideo('https://www.youtube.com/watch?v=s-8xOs1JN6A')"
+            @keydown.enter="openVideo('https://www.youtube.com/watch?v=s-8xOs1JN6A')"
           >
             <div class="dance-image-wrapper">
               <img src="/dance/love-letters.jpg" alt="Love letters to robots" />
+              <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
             </div>
             <!-- <div class="dance-caption">Love letters to robots</div> -->
           </div>
@@ -114,10 +121,15 @@
           <!-- untitled -->
           <div
             class="dance-item"
+            role="link"
+            tabindex="0"
+            aria-label="Untitled bekijken op YouTube"
             @click="openVideo('https://www.youtube.com/watch?v=ZS1LA9eGNXo')"
+            @keydown.enter="openVideo('https://www.youtube.com/watch?v=ZS1LA9eGNXo')"
           >
             <div class="dance-image-wrapper">
               <img src="/dance/untitled.jpg" alt="Untitled" />
+              <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
             </div>
             <!-- <div class="dance-caption">untitled</div> -->
           </div>
@@ -125,10 +137,15 @@
           <!-- 2Dance Untitled 2026 -->
           <div
             class="dance-item"
+            role="link"
+            tabindex="0"
+            aria-label="2Dance Untitled 2026 bekijken op YouTube"
             @click="openVideo('https://www.youtube.com/watch?v=xU7iY7s7Fnc')"
+            @keydown.enter="openVideo('https://www.youtube.com/watch?v=xU7iY7s7Fnc')"
           >
             <div class="dance-image-wrapper">
               <img src="/dance/untitled-2026.jpg" alt="2Dance Untitled 2026" />
+              <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
             </div>
           </div>
         </div>
@@ -459,11 +476,33 @@ function activeAnimationSource(item) {
 async function playActiveAnimation(item) {
   await nextTick()
   const video = animationVideoRefs.get(item.id)
-  if (!video) return
-  video.load()
+  if (!video || activeAnimationId.value !== item.id) return
+  video.muted = true
   video.play().catch(() => {
-    if (startingAnimationId.value === item.id) startingAnimationId.value = null
+    if (activeAnimationId.value !== item.id) return markAnimationStartFailed(item.id)
+
+    // If enough data was already available, make one fresh attempt. Otherwise
+    // @canplay performs the retry when the cold-cache request finishes.
+    if (video.readyState >= 2) {
+      video.play().catch(() => markAnimationStartFailed(item.id))
+    }
   })
+}
+
+function resumeAnimationIfActive(item) {
+  if (
+    activeAnimationId.value !== item.id ||
+    playingAnimationId.value === item.id
+  ) return
+
+  const video = animationVideoRefs.get(item.id)
+  if (!video) return
+  video.muted = true
+  video.play().catch(() => markAnimationStartFailed(item.id))
+}
+
+function markAnimationStartFailed(id) {
+  if (startingAnimationId.value === id) startingAnimationId.value = null
 }
 
 function startAnimation(item) {
@@ -1979,7 +2018,6 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   transition: opacity 0.22s ease, transform 0.35s ease;
 }
 
-.animation-item:hover img,
 .dance-item:hover img {
   transform: scale(1.025);
 }
@@ -1990,10 +2028,6 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
 .animation-item--edge-crop .animation-thumb video {
   transform: scale(1.045);
-}
-
-.animation-item--edge-crop:hover .animation-thumb img {
-  transform: scale(1.065);
 }
 
 .dance-grid {
@@ -2008,6 +2042,7 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 }
 
 .dance-image-wrapper {
+  position: relative;
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 10;
@@ -2019,6 +2054,38 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   height: 100%;
   object-fit: cover;
   object-position: center;
+}
+
+.youtube-hover-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: clamp(2.6rem, 4vw, 3.5rem);
+  aspect-ratio: 1.42 / 1;
+  display: grid;
+  place-items: center;
+  border-radius: 24%;
+  background: #ff0033;
+  box-shadow: 0 0.45rem 1.4rem rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.84);
+  transition: opacity 0.18s ease, transform 0.22s ease;
+}
+
+.youtube-hover-icon span {
+  width: 0;
+  height: 0;
+  margin-left: 8%;
+  border-top: 0.48rem solid transparent;
+  border-bottom: 0.48rem solid transparent;
+  border-left: 0.78rem solid #fff;
+}
+
+.dance-item:hover .youtube-hover-icon,
+.dance-item:focus-visible .youtube-hover-icon {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .me-text {
