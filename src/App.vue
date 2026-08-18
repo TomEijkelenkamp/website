@@ -111,7 +111,7 @@
             >
               <div class="dance-image-wrapper">
                 <img src="/dance/love-letters.jpg" alt="Love letters to robots" />
-                <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
+                <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
 
@@ -124,7 +124,7 @@
             >
               <div class="dance-image-wrapper">
                 <img src="/dance/untitled.jpg" alt="Untitled" />
-                <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
+                <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
 
@@ -137,7 +137,7 @@
             >
               <div class="dance-image-wrapper">
                 <img src="/dance/untitled-2026.jpg" alt="2Dance Untitled 2026" />
-                <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
+                <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
           </div>
@@ -2093,34 +2093,59 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
 .youtube-hover-icon {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: clamp(2.6rem, 4vw, 3.5rem);
-  aspect-ratio: 1.42 / 1;
-  display: grid;
-  place-items: center;
-  border-radius: 24%;
-  background: #ff0033;
-  box-shadow: 0 0.45rem 1.4rem rgba(0, 0, 0, 0.28);
+  right: clamp(0.45rem, 1vw, 0.7rem);
+  bottom: clamp(0.45rem, 1vw, 0.7rem);
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.36rem 0.42rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.35rem;
+  background: rgba(18, 21, 19, 0.72);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 0.2rem 0.7rem rgba(0, 0, 0, 0.16);
+  color: #fff;
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(0.84);
-  transition: opacity 0.18s ease, transform 0.22s ease;
+  transform: translateY(0.2rem);
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
-.youtube-hover-icon span {
+.youtube-mark {
+  position: relative;
+  width: 1.05rem;
+  height: 0.72rem;
+  flex: 0 0 auto;
+  border-radius: 0.2rem;
+  background: #ff0033;
+}
+
+.youtube-mark::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
   width: 0;
   height: 0;
-  margin-left: 8%;
-  border-top: 0.48rem solid transparent;
-  border-bottom: 0.48rem solid transparent;
-  border-left: 0.78rem solid #fff;
+  border-top: 0.19rem solid transparent;
+  border-bottom: 0.19rem solid transparent;
+  border-left: 0.31rem solid #fff;
+  transform: translate(-38%, -50%);
+}
+
+.new-tab-icon {
+  width: 0.78rem;
+  height: 0.78rem;
+  flex: 0 0 auto;
+  background: url('/icons/new-window-flaticon-16799159.png') center / contain no-repeat;
+  filter: invert(1);
+  opacity: 0.88;
 }
 
 .dance-item:hover .youtube-hover-icon,
 .dance-item:focus-visible .youtube-hover-icon {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translateY(0);
 }
 
 .me-text {
