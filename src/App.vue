@@ -2053,10 +2053,6 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   transition: opacity 0.22s ease, transform 0.35s ease;
 }
 
-.dance-item:hover img {
-  transform: scale(1.025);
-}
-
 .animation-item--edge-crop .animation-thumb img {
   transform: scale(1.045);
 }
@@ -2069,11 +2065,21 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(0.75rem, 1.75vw, 1.5rem);
+  padding: clamp(0.65rem, 1.2vw, 0.9rem);
 }
 
 .dance-item {
+  position: relative;
   min-width: 0;
   max-width: none;
+  transform-origin: center;
+  transition: transform 0.28s ease;
+}
+
+.dance-item:hover,
+.dance-item:focus-visible {
+  z-index: 2;
+  transform: translateY(-0.14rem) scale(1.03);
 }
 
 .dance-image-wrapper {
@@ -2082,6 +2088,12 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   height: auto;
   aspect-ratio: 16 / 10;
   background: rgba(35, 72, 57, 0.05);
+  transition: box-shadow 0.28s ease;
+}
+
+.dance-item:hover .dance-image-wrapper,
+.dance-item:focus-visible .dance-image-wrapper {
+  box-shadow: 0 0.65rem 1.6rem rgba(20, 43, 32, 0.16);
 }
 
 .dance-image-wrapper img {
