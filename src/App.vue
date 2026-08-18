@@ -102,53 +102,45 @@
 
 
           <div v-show="activeOverlay === 'dance'" class="dance-grid">
-          <!-- Love letters to robots -->
-          <div
-            class="dance-item"
-            role="link"
-            tabindex="0"
-            aria-label="Love letters to robots bekijken op YouTube"
-            @click="openVideo('https://www.youtube.com/watch?v=s-8xOs1JN6A')"
-            @keydown.enter="openVideo('https://www.youtube.com/watch?v=s-8xOs1JN6A')"
-          >
-            <div class="dance-image-wrapper">
-              <img src="/dance/love-letters.jpg" alt="Love letters to robots" />
-              <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
-            </div>
-            <!-- <div class="dance-caption">Love letters to robots</div> -->
-          </div>
+            <a
+              class="dance-item"
+              href="https://www.youtube.com/watch?v=s-8xOs1JN6A"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Love letters to robots bekijken op YouTube"
+            >
+              <div class="dance-image-wrapper">
+                <img src="/dance/love-letters.jpg" alt="Love letters to robots" />
+                <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
+              </div>
+            </a>
 
-          <!-- untitled -->
-          <div
-            class="dance-item"
-            role="link"
-            tabindex="0"
-            aria-label="Untitled bekijken op YouTube"
-            @click="openVideo('https://www.youtube.com/watch?v=ZS1LA9eGNXo')"
-            @keydown.enter="openVideo('https://www.youtube.com/watch?v=ZS1LA9eGNXo')"
-          >
-            <div class="dance-image-wrapper">
-              <img src="/dance/untitled.jpg" alt="Untitled" />
-              <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
-            </div>
-            <!-- <div class="dance-caption">untitled</div> -->
-          </div>
+            <a
+              class="dance-item"
+              href="https://www.youtube.com/watch?v=ZS1LA9eGNXo"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Untitled bekijken op YouTube"
+            >
+              <div class="dance-image-wrapper">
+                <img src="/dance/untitled.jpg" alt="Untitled" />
+                <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
+              </div>
+            </a>
 
-          <!-- 2Dance Untitled 2026 -->
-          <div
-            class="dance-item"
-            role="link"
-            tabindex="0"
-            aria-label="2Dance Untitled 2026 bekijken op YouTube"
-            @click="openVideo('https://www.youtube.com/watch?v=xU7iY7s7Fnc')"
-            @keydown.enter="openVideo('https://www.youtube.com/watch?v=xU7iY7s7Fnc')"
-          >
-            <div class="dance-image-wrapper">
-              <img src="/dance/untitled-2026.jpg" alt="2Dance Untitled 2026" />
-              <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
-            </div>
+            <a
+              class="dance-item"
+              href="https://www.youtube.com/watch?v=xU7iY7s7Fnc"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="2Dance Untitled 2026 bekijken op YouTube"
+            >
+              <div class="dance-image-wrapper">
+                <img src="/dance/untitled-2026.jpg" alt="2Dance Untitled 2026" />
+                <span class="youtube-hover-icon" aria-hidden="true"><span></span></span>
+              </div>
+            </a>
           </div>
-        </div>
 
 
           <div v-show="activeOverlay === 'me'" class="me-text">
@@ -591,11 +583,6 @@ const allImageUrls = computed(() => {
 
   return [...research, ...animation, ...dance].filter(Boolean)
 })
-
-function openVideo(url) {
-  window.open(url, '_blank')
-}
-
 
 const mouseEnabled = computed(() => activeOverlay.value === null)
 
@@ -1877,6 +1864,8 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   cursor: pointer;
   text-align: center;
   max-width: 100%;
+  color: inherit;
+  text-decoration: none;
 }
 
 .dance-image-wrapper {
