@@ -1,33 +1,53 @@
 <template>
-  <div class="app">
+  <div class="app" :class="{ 'menu-mask-ready': menuMaskReady }">
     <div ref="container" class="canvas-container"></div>
 
     <!-- top bar -->
     <div class="top-bar">
       <button
+        data-menu="research"
         @click="openOverlay('research')"
         :class="{ active: activeOverlay === 'research' }"
+        @pointerenter="hoveredMenu = 'research'"
+        @pointerleave="hoveredMenu = null"
+        @focus="hoveredMenu = 'research'"
+        @blur="hoveredMenu = null"
       >
         Research
       </button>
 
       <button
+        data-menu="animation"
         @click="openOverlay('animation')"
         :class="{ active: activeOverlay === 'animation' }"
+        @pointerenter="hoveredMenu = 'animation'"
+        @pointerleave="hoveredMenu = null"
+        @focus="hoveredMenu = 'animation'"
+        @blur="hoveredMenu = null"
       >
         Animation
       </button>
 
       <button
+        data-menu="dance"
         @click="openOverlay('dance')"
         :class="{ active: activeOverlay === 'dance' }"
+        @pointerenter="hoveredMenu = 'dance'"
+        @pointerleave="hoveredMenu = null"
+        @focus="hoveredMenu = 'dance'"
+        @blur="hoveredMenu = null"
       >
         Dance
       </button>
 
       <button
+        data-menu="me"
         @click="openOverlay('me')"
         :class="{ active: activeOverlay === 'me' }"
+        @pointerenter="hoveredMenu = 'me'"
+        @pointerleave="hoveredMenu = null"
+        @focus="hoveredMenu = 'me'"
+        @blur="hoveredMenu = null"
       >
         Me
       </button>
@@ -302,6 +322,8 @@ import { onMounted, onBeforeUnmount, ref, reactive, computed, watch, nextTick } 
 import * as THREE from 'three'
 import HsvColorPicker from './components/HsvColorPicker.vue'
 const activeOverlay = ref(null) // 'research' | 'animation' | 'dance' | 'me' | null
+const hoveredMenu = ref(null)
+const menuMaskReady = ref(false)
 
 // NEW: flag to hide overlay while we prewarm
 const isPrewarming = ref(true)
@@ -314,6 +336,16 @@ function openOverlay(which) {
 function closeOverlay() {
   activeOverlay.value = null
 }
+
+async function redrawTextMask() {
+  await nextTick()
+  if (!textFontReady || !container.value || !renderer) return
+  const width = Math.max(1, container.value.clientWidth || window.innerWidth)
+  const height = Math.max(1, container.value.clientHeight || window.innerHeight)
+  loadSvgAsTexture(img, width, height)
+}
+
+watch([hoveredMenu, activeOverlay], redrawTextMask)
 
 function openExternal(url) {
   window.open(url, '_blank')
@@ -893,12 +925,40 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
   ctx.font = `400 ${subtitleSize}px "${appliedFont.value}", sans-serif`
   ctx.fillText('Artist · Graphics · Algorithmic Design', margin, subtitleY)
 
+  const containerRect = container.value?.getBoundingClientRect()
+  if (containerRect) {
+    document.querySelectorAll('.top-bar button[data-menu]').forEach((button) => {
+      const rect = button.getBoundingClientRect()
+      const styles = window.getComputedStyle(button)
+      const fontSize = Number.parseFloat(styles.fontSize) || 16
+      const label = button.textContent.trim()
+      const centerX = rect.left - containerRect.left + rect.width / 2
+      const centerY = rect.top - containerRect.top + rect.height / 2
+
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.font = `500 ${fontSize}px "${appliedFont.value}", sans-serif`
+      ctx.fillText(label, centerX, centerY)
+
+      const menuName = button.dataset.menu
+      if (hoveredMenu.value === menuName || activeOverlay.value === menuName) {
+        const textWidth = ctx.measureText(label).width
+        ctx.fillRect(centerX - textWidth / 2, centerY + fontSize * 0.62, textWidth, 1)
+      }
+    })
+  }
+
   // make texture
+  postMesh?.geometry.dispose()
+  postMesh?.material.dispose()
+  textTexture?.dispose()
+
   const tex = new THREE.CanvasTexture(canvas)
   tex.minFilter = THREE.LinearFilter
   tex.magFilter = THREE.LinearFilter
   tex.generateMipmaps = false
   tex.needsUpdate = true
+  textTexture = tex
 
   // post scene
   postScene = new THREE.Scene()
@@ -1183,6 +1243,7 @@ function initThree() {
     const currentWidth = Math.max(1, container.value.clientWidth || window.innerWidth)
     const currentHeight = Math.max(1, container.value.clientHeight || window.innerHeight)
     loadSvgAsTexture(img, currentWidth, currentHeight)
+    menuMaskReady.value = true
   }).catch(() => {})
 
   window.addEventListener('resize', onResize)
@@ -2112,6 +2173,19 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   color: #173b2b;
 }
 
+.app.menu-mask-ready .top-bar button,
+.app.menu-mask-ready .top-bar button:hover,
+.app.menu-mask-ready .top-bar button.active {
+  border-bottom-color: transparent;
+  color: transparent;
+}
+
+.top-bar button:focus-visible {
+  border-radius: 0.15rem;
+  outline: 1px solid rgba(35, 72, 57, 0.48);
+  outline-offset: 0.2rem;
+}
+
 .research-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -2291,7 +2365,7 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
 .overlay {
   position: fixed;
-  inset: 0;
+  inset: clamp(2.8rem, 2.55rem + 0.7vw, 3.35rem) 0 0;
   background: rgba(248, 252, 248, 0.76);
   backdrop-filter: blur(32px);
   display: flex;
