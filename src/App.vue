@@ -623,9 +623,9 @@ const controlPanelOpen = ref(false)
 const squareRes = ref(3) // 3x3 = 9 triangles
 
 const colorA = reactive({ h: 130, s: 0.08, v: 0.97 })
-const colorB = reactive({ h: 112, s: 0.32, v: 0.95 })
-const textColorA = reactive({ h: 239, s: 0.90, v: 0.49 })
-const textColorB = reactive({ h: 241, s: 0.06, v: 1.00 })
+const colorB = reactive({ h: 112, s: 0.41, v: 0.95 })
+const textColorA = reactive({ h: 239, s: 0.96, v: 0.41 })
+const textColorB = reactive({ h: 244, s: 0.00, v: 1.00 })
 
 const sizeMin = ref(18)
 const sizeMax = ref(460)
