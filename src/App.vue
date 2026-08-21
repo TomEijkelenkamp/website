@@ -169,7 +169,55 @@
       </div>
     </div>
 
-    <div v-show="controlPanelOpen" class="control-panel">
+    <div
+      v-show="controlPanelOpen"
+      ref="controlPanel"
+      class="control-panel"
+      :style="controlPanelStyle"
+    >
+      <div class="control-panel-header" @pointerdown="beginControlPanelDrag">
+        <div class="control-panel-heading">
+          <div>
+            <strong>Simulation settings</strong>
+            <span>Drag · resize</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="control-panel-close"
+          aria-label="Close simulation settings"
+          @pointerdown.stop
+          @click="controlPanelOpen = false"
+        >×</button>
+      </div>
+
+      <div class="control-panel-body">
+      <div class="simulation-actions" aria-label="Simulation preview controls">
+        <button type="button" :class="{ active: animationPaused }" @click="animationPaused = !animationPaused">
+          {{ animationPaused ? 'Resume motion' : 'Pause motion' }}
+        </button>
+        <button type="button" :class="{ active: colorLayoutMode }" @click="colorLayoutMode = !colorLayoutMode">
+          {{ colorLayoutMode ? 'Follow spline' : 'Color line' }}
+        </button>
+      </div>
+
+      <section class="font-library">
+        <label for="site-font-select">Typeface</label>
+        <div class="font-select-wrap">
+          <select id="site-font-select" v-model="selectedFont" :aria-busy="fontLoading">
+            <optgroup v-for="group in fontGroups" :key="group.label" :label="group.label">
+              <option v-for="font in group.fonts" :key="font.name" :value="font.name">
+                {{ font.name }}
+              </option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="font-preview" :style="{ fontFamily: `'${appliedFont}', sans-serif` }">
+          Tom Eijkelenkamp
+        </div>
+        <p>{{ activeFont.description }}<span v-if="fontLoading"> · Loading…</span></p>
+      </section>
+
       <section>
         <label>
           Triangle count: {{ squareRes }} × {{ squareRes }} ({{ squareRes * squareRes }} triangles)
@@ -209,34 +257,9 @@
         </section>
       </div>
 
-      <div class="two-columns">
-        <section>
-          <h3>Color A (HSV)</h3>
-          <label>{{ colorALabel }}</label>
-          <label>
-            <input type="range" min="0" max="360" v-model.number="colorA.h" />
-          </label>
-          <label>
-            <input type="range" min="0" max="1" step="0.01" v-model.number="colorA.s" />
-          </label>
-          <label>
-            <input type="range" min="0" max="1" step="0.01" v-model.number="colorA.v" />
-          </label>
-        </section>
-
-        <section>
-          <h3>Color B (HSV)</h3>
-          <label>{{ colorBLabel }}</label>
-          <label>
-            <input type="range" min="0" max="360" v-model.number="colorB.h" />
-          </label>
-          <label>
-            <input type="range" min="0" max="1" step="0.01" v-model.number="colorB.s" />
-          </label>
-          <label>
-            <input type="range" min="0" max="1" step="0.01" v-model.number="colorB.v" />
-          </label>
-        </section>
+      <div class="color-picker-grid">
+        <HsvColorPicker label="Triangle color A" v-bind="colorA" @update="Object.assign(colorA, $event)" />
+        <HsvColorPicker label="Triangle color B" v-bind="colorB" @update="Object.assign(colorB, $event)" />
       </div>
         <section>
           <div class="gradient-bar" :style="{ background: gradientCss }"></div>
@@ -262,40 +285,14 @@
         </section>
       </div>
 
-      <div class="two-columns">
-        <section>
-          <h3>Text Color A (HSV)</h3>
-          <label>{{ textColorALabel }}</label>
-          <label>
-            <input type="range" min="0" max="360" v-model.number="textColorA.h" />
-          </label>
-          <label>
-            <input type="range" min="0" max="1" step="0.01" v-model.number="textColorA.s" />
-          </label>
-          <label>
-            <input type="range" min="0" max="1" step="0.01" v-model.number="textColorA.v" />
-          </label>
-        </section>
-
-        <section>
-          <h3>Text Color B (HSV)</h3>
-          <label>{{ textColorBLabel }}</label>
-          <label>
-            <input type="range" min="0" max="360" v-model.number="textColorB.h" />
-          </label>
-          <label>
-            <input type="range" min="0" max="1" step="0.01" v-model.number="textColorB.s" />
-          </label>
-          <label>
-            <input type="range" min="0" max="1" step="0.01" v-model.number="textColorB.v" />
-          </label>
-        </section>
+      <div class="color-picker-grid">
+        <HsvColorPicker label="Text color A" v-bind="textColorA" @update="Object.assign(textColorA, $event)" />
+        <HsvColorPicker label="Text color B" v-bind="textColorB" @update="Object.assign(textColorB, $event)" />
       </div>
       <section>
         <div class="gradient-bar" :style="{ background: textGradientCss }"></div>
       </section>
-
-      
+      </div>
     </div>
   </div>
 </template>
@@ -303,6 +300,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, reactive, computed, watch, nextTick } from 'vue'
 import * as THREE from 'three'
+import HsvColorPicker from './components/HsvColorPicker.vue'
 const activeOverlay = ref(null) // 'research' | 'animation' | 'dance' | 'me' | null
 
 // NEW: flag to hide overlay while we prewarm
@@ -586,46 +584,165 @@ const allImageUrls = computed(() => {
 
 const mouseEnabled = computed(() => activeOverlay.value === null)
 
+const fontGroups = [
+  {
+    label: 'Art-led · graphic',
+    fonts: [
+      { name: 'Syne', description: 'Art-driven, eccentric and deliberately uneven.' },
+      { name: 'Space Grotesk', description: 'Graphic and contemporary with sharper details.' },
+      { name: 'Bricolage Grotesque', description: 'Cultural, restless and full of visual personality.' },
+      { name: 'Anybody', description: 'Unconventional proportions with a poster-like voice.' },
+      { name: 'Anek Latin', description: 'Flexible, editorial and less polished in a useful way.' },
+      { name: 'Big Shoulders Display', description: 'Architectural, narrow and dramatically constructed.' },
+      { name: 'Staatliches', description: 'Direct, poster-like and stripped of softness.' },
+      { name: 'Antonio', description: 'Tall, decisive and suited to an artist identity.' },
+      { name: 'League Gothic', description: 'Classic poster proportions without feeling ornate.' },
+      { name: 'IBM Plex Mono', description: 'Systematic and intellectual with human detail.' },
+    ],
+  },
+  {
+    label: 'Print · editorial',
+    fonts: [
+      { name: 'Fraunces', description: 'Expressive 1970s warmth with contemporary control.' },
+      { name: 'Newsreader', description: 'Cultured magazine typography that stays understated.' },
+      { name: 'Spectral', description: 'Literary, textured and strong at small sizes.' },
+      { name: 'Source Serif 4', description: 'Editorial authority without decorative excess.' },
+      { name: 'Bitter', description: 'Solid slab-serif forms with an approachable print feel.' },
+      { name: 'Vollkorn', description: 'Dark, tactile and reminiscent of printed books.' },
+      { name: 'BioRhyme', description: 'Chunky slab-serif with unusual rhythm and personality.' },
+      { name: 'Lora', description: 'Calligraphic details balanced by practical readability.' },
+      { name: 'DM Serif Display', description: 'High-impact editorial display with fluid shapes.' },
+      { name: 'Libre Caslon Display', description: 'Loose, characterful display lettering for large text.' },
+    ],
+  },
+  {
+    label: 'Poster · character',
+    fonts: [
+      { name: 'Bodoni Moda', description: 'Fashion-led contrast with a dramatic silhouette.' },
+      { name: 'Cormorant Garamond', description: 'Fragile, artistic and intentionally idiosyncratic.' },
+      { name: 'Josefin Sans', description: 'Art-deco geometry with a light vintage accent.' },
+      { name: 'Tenor Sans', description: 'Elegant poster lettering with restrained character.' },
+      { name: 'Marcellus', description: 'Carved, cinematic forms with quiet authority.' },
+      { name: 'Forum', description: 'Open classical proportions that feel theatrical.' },
+      { name: 'Federo', description: 'Early-modern display lettering with unusual details.' },
+      { name: 'Limelight', description: 'Bold art-deco display built for titles and posters.' },
+      { name: 'Grenze', description: 'Expressive hybrid shapes between editorial and experimental.' },
+      { name: 'Yeseva One', description: 'Softly theatrical display type with a hand-made quality.' },
+    ],
+  },
+]
 
-const colorALabel = computed(() => {
-  const h = Math.round(colorA.h)
-  const s = colorA.s.toFixed(2)
-  const v = colorA.v.toFixed(2)
-  return `(${h}°, ${s}, ${v})`
+const fontOptions = fontGroups.flatMap(group => group.fonts)
+const selectedFont = ref('Marcellus')
+const appliedFont = ref('Marcellus')
+const fontLoading = ref(false)
+const activeFont = computed(() => fontOptions.find(font => font.name === selectedFont.value) || fontOptions[0])
+let fontLoadRequest = 0
+
+watch(selectedFont, async (fontName) => {
+  const requestId = ++fontLoadRequest
+  fontLoading.value = true
+  try {
+    await document.fonts.load(`400 48px "${fontName}"`)
+    if (requestId !== fontLoadRequest) return
+    appliedFont.value = fontName
+    document.documentElement.style.setProperty('--site-font', `"${fontName}"`)
+    if (container.value && renderer) {
+      const width = Math.max(1, container.value.clientWidth || window.innerWidth)
+      const height = Math.max(1, container.value.clientHeight || window.innerHeight)
+      loadSvgAsTexture(img, width, height)
+    }
+  } catch {
+    // Keep the last fully loaded font when a remote font cannot be fetched.
+  } finally {
+    if (requestId === fontLoadRequest) fontLoading.value = false
+  }
 })
 
-const colorBLabel = computed(() => {
-  const h = Math.round(colorB.h)
-  const s = colorB.s.toFixed(2)
-  const v = colorB.v.toFixed(2)
-  return `(${h}°, ${s}, ${v})`
-})
-
-const textColorALabel = computed(() => {
-  const h = Math.round(textColorA.h)
-  const s = textColorA.s.toFixed(2)
-  const v = textColorA.v.toFixed(2)
-  return `(${h}°, ${s}, ${v})`
-})
-
-const textColorBLabel = computed(() => {
-  const h = Math.round(textColorB.h)
-  const s = textColorB.s.toFixed(2)
-  const v = textColorB.v.toFixed(2)
-  return `(${h}°, ${s}, ${v})`
-})
 
 const container = ref(null)
 const hasPointer = ref(false)
 
 // UI state
 const controlPanelOpen = ref(false)
+const controlPanel = ref(null)
+const controlPanelPosition = reactive({ x: null, y: null })
+let controlPanelDrag = null
+
+const controlPanelStyle = computed(() => {
+  if (controlPanelPosition.x == null || controlPanelPosition.y == null) return {}
+  return {
+    left: `${controlPanelPosition.x}px`,
+    top: `${controlPanelPosition.y}px`,
+    right: 'auto',
+  }
+})
+
+function clampControlPanelPosition(x, y) {
+  const panel = controlPanel.value
+  if (!panel) return { x, y }
+  const margin = 8
+  const maxX = Math.max(margin, window.innerWidth - panel.offsetWidth - margin)
+  const maxY = Math.max(margin, window.innerHeight - panel.offsetHeight - margin)
+  return {
+    x: clamp(margin, x, maxX),
+    y: clamp(margin, y, maxY),
+  }
+}
+
+function beginControlPanelDrag(event) {
+  if (event.button !== 0) return
+  const panel = controlPanel.value
+  if (!panel) return
+
+  const rect = panel.getBoundingClientRect()
+  controlPanelDrag = {
+    pointerId: event.pointerId,
+    offsetX: event.clientX - rect.left,
+    offsetY: event.clientY - rect.top,
+  }
+  controlPanelPosition.x = rect.left
+  controlPanelPosition.y = rect.top
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+  window.addEventListener('pointermove', moveControlPanel)
+  window.addEventListener('pointerup', endControlPanelDrag)
+  window.addEventListener('pointercancel', endControlPanelDrag)
+  event.preventDefault()
+}
+
+function moveControlPanel(event) {
+  if (!controlPanelDrag || event.pointerId !== controlPanelDrag.pointerId) return
+  const next = clampControlPanelPosition(
+    event.clientX - controlPanelDrag.offsetX,
+    event.clientY - controlPanelDrag.offsetY,
+  )
+  controlPanelPosition.x = next.x
+  controlPanelPosition.y = next.y
+}
+
+function endControlPanelDrag(event) {
+  if (controlPanelDrag && event.pointerId !== controlPanelDrag.pointerId) return
+  controlPanelDrag = null
+  window.removeEventListener('pointermove', moveControlPanel)
+  window.removeEventListener('pointerup', endControlPanelDrag)
+  window.removeEventListener('pointercancel', endControlPanelDrag)
+}
+
+function keepControlPanelInViewport() {
+  if (controlPanelPosition.x == null || controlPanelPosition.y == null) return
+  const next = clampControlPanelPosition(controlPanelPosition.x, controlPanelPosition.y)
+  controlPanelPosition.x = next.x
+  controlPanelPosition.y = next.y
+}
+
 const squareRes = ref(3) // 3x3 = 9 triangles
+const animationPaused = ref(false)
+const colorLayoutMode = ref(false)
 
 const colorA = reactive({ h: 130, s: 0.08, v: 0.97 })
 const colorB = reactive({ h: 112, s: 0.41, v: 0.95 })
-const textColorA = reactive({ h: 239, s: 0.96, v: 0.41 })
-const textColorB = reactive({ h: 244, s: 0.00, v: 1.00 })
+const textColorA = reactive({ h: 203, s: 1.00, v: 0.53 })
+const textColorB = reactive({ h: 244, s: 1.00, v: 0.89 })
 
 const sizeMin = ref(18)
 const sizeMax = ref(460)
@@ -714,7 +831,7 @@ function createTextTexture(
   ctx.fillStyle = color
   ctx.textAlign = align
   ctx.textBaseline = 'middle'
-  ctx.font = `${fontWeight} ${fontSize}px "Space Grotesk", sans-serif`
+  ctx.font = `${fontWeight} ${fontSize}px "${appliedFont.value}", sans-serif`
 
   // handle multiple lines
   const lines = text.split(/\r?\n/)
@@ -762,7 +879,7 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
 
   const margin = Math.max(24, Math.min(100, targetWidth * 0.065))
   let titleSize = Math.max(28, Math.min(58, targetWidth * 0.038))
-  ctx.font = `500 ${titleSize}px "Space Grotesk", sans-serif`
+  ctx.font = `500 ${titleSize}px "${appliedFont.value}", sans-serif`
   const maxTitleWidth = targetWidth - margin * 2
   const measuredWidth = ctx.measureText('Tom Eijkelenkamp').width
   if (measuredWidth > maxTitleWidth) titleSize *= maxTitleWidth / measuredWidth
@@ -771,9 +888,9 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
   const subtitleY = targetHeight - margin
   const titleY = subtitleY - subtitleSize * 1.75
 
-  ctx.font = `500 ${titleSize}px "Space Grotesk", sans-serif`
+  ctx.font = `500 ${titleSize}px "${appliedFont.value}", sans-serif`
   ctx.fillText('Tom Eijkelenkamp', margin, titleY)
-  ctx.font = `400 ${subtitleSize}px "Space Grotesk", sans-serif`
+  ctx.font = `400 ${subtitleSize}px "${appliedFont.value}", sans-serif`
   ctx.fillText('Artist · Graphics · Algorithmic Design', margin, subtitleY)
 
   // make texture
@@ -1006,6 +1123,9 @@ onBeforeUnmount(() => {
   window.removeEventListener('pageshow', resumeAfterExternalNavigation)
   window.removeEventListener('focus', resumeAfterExternalNavigation)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('pointermove', moveControlPanel)
+  window.removeEventListener('pointerup', endControlPanelDrag)
+  window.removeEventListener('pointercancel', endControlPanelDrag)
   renderer?.domElement.removeEventListener('webglcontextlost', handleWebGLContextLost)
   renderer?.domElement.removeEventListener('webglcontextrestored', resumeAfterExternalNavigation)
   window.removeEventListener('pointermove', onPointerMove)
@@ -1054,19 +1174,12 @@ function initThree() {
   )
   simRenderTarget.samples = 4
 
-  // Always create the text composition immediately. Canvas falls back to a
-  // system sans-serif while Space Grotesk is still loading, so a slow or
-  // blocked font request can never leave the simulation without its title.
-  textFontReady = true
-  loadSvgAsTexture(img, w, h)
-
-  // Redraw once the intended font weights are available.
-  Promise.all([
-    document.fonts.load('500 48px "Space Grotesk"'),
-    document.fonts.load('400 24px "Space Grotesk"'),
-  ]).then(([titleFaces, subtitleFaces]) => {
-    if (!titleFaces.length || !subtitleFaces.length) return
+  // Only create the title texture after the selected face is available. This
+  // prevents the canvas from briefly drawing the title in a fallback font.
+  document.fonts.load(`400 48px "${appliedFont.value}"`).then((faces) => {
+    if (!faces.length) return
     if (!container.value || !renderer) return
+    textFontReady = true
     const currentWidth = Math.max(1, container.value.clientWidth || window.innerWidth)
     const currentHeight = Math.max(1, container.value.clientHeight || window.innerHeight)
     loadSvgAsTexture(img, currentWidth, currentHeight)
@@ -1239,6 +1352,13 @@ function buildSimulation(res) {
 
   instanced.geometry.setAttribute('aRef', new THREE.InstancedBufferAttribute(new Float32Array(uvs), 2))
   instanced.geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(new Float32Array(seeds), 1))
+  instanced.geometry.setAttribute(
+    'aPreviewSeed',
+    new THREE.InstancedBufferAttribute(
+      new Float32Array(Array.from({ length: count }, (_, index) => count === 1 ? 0.5 : index / (count - 1))),
+      1,
+    ),
+  )
 
   scene.add(instanced)
   renderMesh = instanced
@@ -1392,6 +1512,7 @@ function createRenderMaterial() {
       uColorB: { value: new THREE.Color() },
       uSizeMin: { value: effectiveSizeMin.value },
       uSizeMax: { value: effectiveSizeMax.value },
+      uColorLayout: { value: 0 },
     },
     vertexShader: /* glsl */`
       precision highp float;
@@ -1403,6 +1524,8 @@ function createRenderMaterial() {
       uniform float uSizeMin;
       uniform float uSizeMax;
       varying float vSeed;
+      attribute float aPreviewSeed;
+      varying float vPreviewSeed;
       attribute vec3 aBarycentric;
       varying vec3 vBarycentric;
       varying float vSize;
@@ -1412,6 +1535,7 @@ function createRenderMaterial() {
         float size = uSizeMin + (uSizeMax - uSizeMin) * aSeed;
         vSize = size;
         vSeed = aSeed;
+        vPreviewSeed = aPreviewSeed;
         vBarycentric = aBarycentric;
         vec4 worldPosition = instanceMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * modelViewMatrix * worldPosition;
@@ -1422,12 +1546,15 @@ function createRenderMaterial() {
       precision highp float;
       uniform vec3 uColorA;
       uniform vec3 uColorB;
+      uniform float uColorLayout;
       varying float vSeed;
+      varying float vPreviewSeed;
       varying vec3 vBarycentric;
       varying float vSize;
 
       void main() {
-        float t = fract(sin(vSeed * 43758.5453123) * 43758.5453123);
+        float randomT = fract(sin(vSeed * 43758.5453123) * 43758.5453123);
+        float t = mix(randomT, vPreviewSeed, uColorLayout);
         vec3 col = mix(uColorA, uColorB, t);
 
         // distance to the closest edge of the triangle
@@ -1463,53 +1590,79 @@ function animate() {
     const scale = new THREE.Vector3()
     const axis = new THREE.Vector3(0, 0, 1)
 
-    const leader = splinePoint(sharedSpline.points, sharedSpline.progress)
-    const leaderAhead = splinePoint(sharedSpline.points, sharedSpline.progress + 0.01)
-    const leaderTangent = leaderAhead.clone().sub(leader).normalize()
-    sharedSpline.baseSpeed = effectivePathSpeed.value
-    const targetSpeed = sharedSpline.baseSpeed * (
-      1 + Math.max(0, -leaderTangent.y) * gravityEffect.value
-      - Math.max(0, leaderTangent.y) * gravityEffect.value * 0.5
-    )
-    sharedSpline.speed += (targetSpeed - sharedSpline.speed) * (1 - Math.exp(-0.65 * dt))
-    const pixelsPerProgress = Math.max(20, leader.distanceTo(leaderAhead) * 100)
-    sharedSpline.progress += sharedSpline.speed * dt / pixelsPerProgress
-
-    while (sharedSpline.points.length - 3 - sharedSpline.progress < 5) {
-      sharedSpline.points.push(createNextSplinePoint(sharedSpline.points))
-    }
-
-    const pointSpacing = 0.52 * trainSpread.value
-    let tailProgress = sharedSpline.progress - (splineStates.length - 1) * pointSpacing
-    while (tailProgress > 2.5 && sharedSpline.points.length > pathPointCount.value) {
-      sharedSpline.points.shift()
-      sharedSpline.progress -= 1
-      tailProgress -= 1
-    }
-
-    splineStates.forEach((state, index) => {
-      const progress = Math.max(0, sharedSpline.progress - index * pointSpacing)
-      const here = splinePoint(sharedSpline.points, progress)
-      const ahead = splinePoint(sharedSpline.points, progress + 0.01)
-      const tangent = ahead.clone().sub(here).normalize()
-      const response = rotationLag.value * (
-        0.7 + (1 - state.size / effectiveSizeMax.value) * 0.6
+    if (colorLayoutMode.value) {
+      const viewWidth = bounds.x * 2
+      const viewHeight = bounds.y * 2
+      const margin = Math.max(24, Math.min(100, viewWidth * 0.065))
+      const titleSize = Math.max(28, Math.min(58, viewWidth * 0.038))
+      const subtitleSize = Math.max(12, titleSize * 0.23)
+      const titleY = viewHeight - margin - subtitleSize * 1.75
+      const lineWidth = Math.min(viewWidth - margin * 2, titleSize * 7.9)
+      const triangleSize = clamp(
+        22,
+        Math.min(titleSize * 1.2, (lineWidth / Math.max(1, splineStates.length - 1)) * 0.72),
+        74,
       )
 
-      const targetAngle = Math.atan2(tangent.y, tangent.x) - Math.PI / 2
-      const angleDelta = Math.atan2(
-        Math.sin(targetAngle - state.angle),
-        Math.cos(targetAngle - state.angle)
+      splineStates.forEach((state, index) => {
+        const amount = splineStates.length === 1 ? 0.5 : index / (splineStates.length - 1)
+        const screenX = margin + lineWidth * amount
+        position.set(screenX - bounds.x, bounds.y - titleY, 0)
+        rotation.setFromAxisAngle(axis, index % 2 === 0 ? 0 : Math.PI)
+        scale.set(triangleSize, triangleSize, 1)
+        matrix.compose(position, rotation, scale)
+        renderMesh.setMatrixAt(index, matrix)
+      })
+      renderMesh.instanceMatrix.needsUpdate = true
+    } else if (!animationPaused.value) {
+      const leader = splinePoint(sharedSpline.points, sharedSpline.progress)
+      const leaderAhead = splinePoint(sharedSpline.points, sharedSpline.progress + 0.01)
+      const leaderTangent = leaderAhead.clone().sub(leader).normalize()
+      sharedSpline.baseSpeed = effectivePathSpeed.value
+      const targetSpeed = sharedSpline.baseSpeed * (
+        1 + Math.max(0, -leaderTangent.y) * gravityEffect.value
+        - Math.max(0, leaderTangent.y) * gravityEffect.value * 0.5
       )
-      state.angle += angleDelta * (1 - Math.exp(-response * dt))
+      sharedSpline.speed += (targetSpeed - sharedSpline.speed) * (1 - Math.exp(-0.65 * dt))
+      const pixelsPerProgress = Math.max(20, leader.distanceTo(leaderAhead) * 100)
+      sharedSpline.progress += sharedSpline.speed * dt / pixelsPerProgress
 
-      position.set(here.x, here.y, 0)
-      rotation.setFromAxisAngle(axis, state.angle)
-      scale.set(state.size, state.size, 1)
-      matrix.compose(position, rotation, scale)
-      renderMesh.setMatrixAt(index, matrix)
-    })
-    renderMesh.instanceMatrix.needsUpdate = true
+      while (sharedSpline.points.length - 3 - sharedSpline.progress < 5) {
+        sharedSpline.points.push(createNextSplinePoint(sharedSpline.points))
+      }
+
+      const pointSpacing = 0.52 * trainSpread.value
+      let tailProgress = sharedSpline.progress - (splineStates.length - 1) * pointSpacing
+      while (tailProgress > 2.5 && sharedSpline.points.length > pathPointCount.value) {
+        sharedSpline.points.shift()
+        sharedSpline.progress -= 1
+        tailProgress -= 1
+      }
+
+      splineStates.forEach((state, index) => {
+        const progress = Math.max(0, sharedSpline.progress - index * pointSpacing)
+        const here = splinePoint(sharedSpline.points, progress)
+        const ahead = splinePoint(sharedSpline.points, progress + 0.01)
+        const tangent = ahead.clone().sub(here).normalize()
+        const response = rotationLag.value * (
+          0.7 + (1 - state.size / effectiveSizeMax.value) * 0.6
+        )
+
+        const targetAngle = Math.atan2(tangent.y, tangent.x) - Math.PI / 2
+        const angleDelta = Math.atan2(
+          Math.sin(targetAngle - state.angle),
+          Math.cos(targetAngle - state.angle)
+        )
+        state.angle += angleDelta * (1 - Math.exp(-response * dt))
+
+        position.set(here.x, here.y, 0)
+        rotation.setFromAxisAngle(axis, state.angle)
+        scale.set(state.size, state.size, 1)
+        matrix.compose(position, rotation, scale)
+        renderMesh.setMatrixAt(index, matrix)
+      })
+      renderMesh.instanceMatrix.needsUpdate = true
+    }
 
     const ca = hsvToRgb(colorA.h, colorA.s, colorA.v)
     const cb = hsvToRgb(colorB.h, colorB.s, colorB.v)
@@ -1517,6 +1670,7 @@ function animate() {
     renderMesh.material.uniforms.uColorB.value.set(cb.r, cb.g, cb.b)
     renderMesh.material.uniforms.uSizeMin.value = effectiveSizeMin.value
     renderMesh.material.uniforms.uSizeMax.value = effectiveSizeMax.value
+    renderMesh.material.uniforms.uColorLayout.value = colorLayoutMode.value ? 1 : 0
   }
 
   if (postMesh) {
@@ -1577,6 +1731,7 @@ function onResize() {
     sharedSpline.progress = Math.min(7, points.length - 5)
   }
   if (textFontReady) loadSvgAsTexture(img, w, h)
+  keepControlPanelInViewport()
 }
 
 function onPointerMove(e) {
@@ -1639,62 +1794,247 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 }
 
 .control-panel {
-  position: absolute;
+  position: fixed;
   top: 3.7rem;
   right: 1rem;
-  background: rgba(12, 14, 16, 0.85);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 0.75rem;
-  padding: 1rem;
-  max-width: 280px;
-  max-height: calc(100dvh - 5rem);
-  overflow-y: auto;
-  color: #f5f5f5;
-  font-size: 0.8rem;
+  display: flex;
+  width: min(380px, calc(100vw - 1rem));
+  height: min(720px, calc(100dvh - 4.7rem));
+  min-width: 280px;
+  min-height: 260px;
+  max-width: calc(100vw - 1rem);
+  max-height: calc(100dvh - 1rem);
+  overflow: hidden;
+  color: #234839;
+  font-size: 0.75rem;
+  flex-direction: column;
+  background: rgba(249, 251, 247, 0.94);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(35, 72, 57, 0.16);
+  border-radius: 0.7rem;
+  box-shadow: 0 0.8rem 2.2rem rgba(23, 59, 43, 0.12);
   pointer-events: auto;
+  resize: both;
   z-index: 1300;
+  container: settings-panel / inline-size;
+}
+
+.control-panel-header {
+  min-height: 2.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.52rem 0.58rem 0.52rem 0.72rem;
+  border-bottom: 1px solid rgba(35, 72, 57, 0.1);
+  background: rgba(255, 255, 255, 0.36);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.control-panel-header:active {
+  cursor: grabbing;
+}
+
+.control-panel-heading { display: flex; align-items: center; }
+
+.control-panel-heading div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.06rem;
+}
+
+.control-panel-heading strong {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.control-panel-heading div > span {
+  font-size: 0.62rem;
+  opacity: 0.55;
+}
+
+.control-panel-close {
+  width: 1.65rem;
+  height: 1.65rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #234839;
+  background: transparent;
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.control-panel-close:hover {
+  background: rgba(35, 72, 57, 0.07);
+}
+
+.control-panel-body {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.65rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(35, 72, 57, 0.28) transparent;
+}
+
+.simulation-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.42rem;
+  margin-bottom: 0.55rem;
+}
+
+.simulation-actions button {
+  min-height: 2.15rem;
+  padding: 0.42rem 0.6rem;
+  border: 1px solid rgba(35, 72, 57, 0.16);
+  border-radius: 0.45rem;
+  color: #234839;
+  background: rgba(255, 255, 255, 0.58);
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.simulation-actions button:hover {
+  border-color: rgba(35, 72, 57, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.simulation-actions button.active {
+  border-color: rgba(35, 72, 57, 0.34);
+  background: rgba(143, 222, 143, 0.28);
 }
 
 .control-panel section {
-  margin-bottom: 0.75rem;
+  margin: 0 0 0.55rem;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: rgba(35, 72, 57, 0.035);
 }
 
 .control-panel h3 {
-  font-size: 0.75rem;
-  font-weight: 500;
+  margin: 0 0 0.26rem;
+  font-size: 0.68rem;
+  font-weight: 600;
   letter-spacing: -0.03em;
-  margin-bottom: 0.25rem;
-  opacity: 0.9;
+  opacity: 0.78;
 }
 
 .control-panel label {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.25rem;
+  gap: 0.22rem;
+  margin-bottom: 0.36rem;
+  line-height: 1.28;
+}
+
+.font-library {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.font-library > label {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+  opacity: 0.62;
+}
+
+.font-select-wrap {
+  position: relative;
+}
+
+.font-select-wrap::after {
+  content: '⌄';
+  position: absolute;
+  top: 50%;
+  right: 0.7rem;
+  pointer-events: none;
+  transform: translateY(-58%);
+  opacity: 0.55;
+}
+
+.font-library select {
+  width: 100%;
+  height: 2.25rem;
+  padding: 0 2rem 0 0.68rem;
+  border: 1px solid rgba(35, 72, 57, 0.16);
+  border-radius: 0.45rem;
+  color: #234839;
+  background: rgba(255, 255, 255, 0.72);
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+}
+
+.font-library select:focus-visible {
+  outline: 2px solid rgba(66, 154, 97, 0.36);
+  outline-offset: 1px;
+}
+
+.font-library select:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.font-preview {
+  overflow: hidden;
+  padding: 0.28rem 0.08rem 0.08rem;
+  font-size: clamp(1.05rem, 7cqw, 1.55rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.font-library p {
+  min-height: 2.2em;
+  margin: 0;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  opacity: 0.62;
 }
 
 .control-panel input[type="range"] {
   width: 100%;
+  margin: 0;
+  accent-color: #429a61;
+  cursor: pointer;
 }
 
 .gradient-bar {
   width: 100%;
-  height: 18px;
+  height: 16px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(35, 72, 57, 0.12);
 }
 
 .two-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
 }
 
 .three-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 0.5rem;
 }
 
@@ -1726,9 +2066,39 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
   /* font size scales with width */
   font-size: clamp(0.82rem, 0.74rem + 0.35vw, 1.15rem);
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--site-font, "Space Grotesk"), sans-serif;
   font-weight: 500;
   letter-spacing: -0.035em;
+}
+
+.color-picker-grid {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+}
+
+@container settings-panel (min-width: 470px) {
+  .two-columns,
+  .color-picker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .three-columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .control-panel {
+    top: 0.5rem;
+    right: 0.5rem;
+    width: calc(100vw - 1rem);
+    height: calc(100dvh - 1rem);
+    min-width: 0;
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    resize: none;
+  }
 }
 
 .top-bar button:hover {
@@ -1928,7 +2298,7 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   justify-content: center;
   align-items: center;
   z-index: 999; /* above canvas and control panel */
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--site-font, "Space Grotesk"), sans-serif;
   transition: opacity 0.2s ease;
 }
 
