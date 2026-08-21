@@ -771,10 +771,10 @@ const squareRes = ref(3) // 3x3 = 9 triangles
 const animationPaused = ref(false)
 const colorLayoutMode = ref(false)
 
-const colorA = reactive({ h: 130, s: 0.08, v: 0.97 })
-const colorB = reactive({ h: 112, s: 0.41, v: 0.95 })
-const textColorA = reactive({ h: 203, s: 1.00, v: 0.53 })
-const textColorB = reactive({ h: 244, s: 1.00, v: 0.89 })
+const colorA = reactive({ h: 95, s: 0.08, v: 0.97 })
+const colorB = reactive({ h: 105, s: 0.41, v: 0.95 })
+const textColorA = reactive({ h: 265, s: 1.00, v: 0.53 })
+const textColorB = reactive({ h: 244, s: 0.00, v: 1.00 })
 
 const sizeMin = ref(18)
 const sizeMax = ref(460)
