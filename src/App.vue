@@ -2426,11 +2426,13 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 .overlay-content {
   width: min(88vw, 1120px);
   max-height: 82vh;
+  box-sizing: border-box;
   padding: clamp(1rem, 3vw, 2.5rem);
 }
 
 .overlay-body {
   max-height: 72vh;
+  width: 100%;
   scrollbar-width: thin;
   scrollbar-color: rgba(35, 72, 57, 0.25) transparent;
 }
@@ -2480,7 +2482,8 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 }
 
 .animation-grid {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 190px));
+  justify-content: center;
   gap: clamp(0.75rem, 1.6vw, 1.5rem);
 }
 
@@ -2644,18 +2647,17 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
 @media (max-width: 760px) {
   .overlay {
-    align-items: flex-start;
-    padding-top: 4.25rem;
+    align-items: center;
   }
 
   .overlay-content {
     width: calc(100vw - 2rem);
-    max-height: calc(100dvh - 5.25rem);
+    max-height: calc(100% - 1rem);
     padding: 0.5rem;
   }
 
   .overlay-body {
-    max-height: calc(100dvh - 6.25rem);
+    max-height: calc(100dvh - 4.85rem);
   }
 
   .research-list,
@@ -2669,6 +2671,7 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
   .animation-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
   }
 
   .me-text {
