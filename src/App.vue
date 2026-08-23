@@ -1,5 +1,5 @@
 <template>
-  <div class="app" :class="{ 'menu-mask-ready': menuMaskReady }">
+  <div class="app" :class="{ 'menu-mask-ready': menuMaskReady }" :style="typographyStyle">
     <div ref="container" class="canvas-container"></div>
 
     <!-- top bar -->
@@ -236,6 +236,27 @@
           Tom Eijkelenkamp
         </div>
         <p>{{ activeFont.description }}<span v-if="fontLoading"> · Loading…</span></p>
+      </section>
+
+      <section class="typography-settings">
+        <strong>Typography</strong>
+        <div class="two-columns">
+          <div v-for="type in typographyControls" :key="type.label" class="typography-control">
+            <span>{{ type.label }}</span>
+            <label>
+              Size: {{ type.size.value }} px
+              <input type="range" :min="type.min" :max="type.max" step="1" v-model.number="type.size.value" />
+            </label>
+            <label>
+              Boldness: {{ type.weight.value }}
+              <input type="range" min="300" max="700" step="100" v-model.number="type.weight.value" />
+            </label>
+            <label v-if="type.label === 'Navigation'">
+              Menu spacing: {{ menuItemSpacing }} px
+              <input type="range" min="0" max="48" step="1" v-model.number="menuItemSpacing" />
+            </label>
+          </div>
+        </div>
       </section>
 
       <section>
@@ -674,19 +695,59 @@ const fontGroups = [
 
 const fontOptions = fontGroups.flatMap(group => group.fonts)
 const selectedFont = ref('Marcellus')
-const appliedFont = ref('Marcellus')
+const appliedFont = ref('Marcellus Local')
 const fontLoading = ref(false)
+const titleTextSize = ref(61)
+const titleTextWeight = ref(700)
+const subtitleTextSize = ref(30)
+const subtitleTextWeight = ref(600)
+const navigationTextSize = ref(32)
+const navigationTextWeight = ref(700)
+const menuItemSpacing = ref(30)
+const headingTextSize = ref(27)
+const headingTextWeight = ref(600)
+const bodyTextSize = ref(16)
+const bodyTextWeight = ref(400)
+const typographyControls = [
+  { label: 'Main title', size: titleTextSize, weight: titleTextWeight, min: 24, max: 96 },
+  { label: 'Subtitle', size: subtitleTextSize, weight: subtitleTextWeight, min: 8, max: 36 },
+  { label: 'Navigation', size: navigationTextSize, weight: navigationTextWeight, min: 10, max: 32 },
+  { label: 'Content titles', size: headingTextSize, weight: headingTextWeight, min: 10, max: 40 },
+  { label: 'Body text', size: bodyTextSize, weight: bodyTextWeight, min: 10, max: 28 },
+]
+const typographyStyle = computed(() => ({
+  '--navigation-text-size': `${navigationTextSize.value}px`,
+  '--navigation-text-weight': navigationTextWeight.value,
+  '--menu-item-spacing': `${menuItemSpacing.value}px`,
+  '--heading-text-size': `${headingTextSize.value}px`,
+  '--heading-text-weight': headingTextWeight.value,
+  '--body-text-size': `${bodyTextSize.value}px`,
+  '--body-text-weight': bodyTextWeight.value,
+}))
+watch(
+  [
+    titleTextSize,
+    titleTextWeight,
+    subtitleTextSize,
+    subtitleTextWeight,
+    navigationTextSize,
+    navigationTextWeight,
+    menuItemSpacing,
+  ],
+  redrawTextMask,
+)
 const activeFont = computed(() => fontOptions.find(font => font.name === selectedFont.value) || fontOptions[0])
 let fontLoadRequest = 0
 
 watch(selectedFont, async (fontName) => {
   const requestId = ++fontLoadRequest
+  const resolvedFontName = fontName === 'Marcellus' ? 'Marcellus Local' : fontName
   fontLoading.value = true
   try {
-    await document.fonts.load(`400 48px "${fontName}"`)
+    await document.fonts.load(`400 48px "${resolvedFontName}"`)
     if (requestId !== fontLoadRequest) return
-    appliedFont.value = fontName
-    document.documentElement.style.setProperty('--site-font', `"${fontName}"`)
+    appliedFont.value = resolvedFontName
+    document.documentElement.style.setProperty('--site-font', `"${resolvedFontName}"`)
     if (container.value && renderer) {
       const width = Math.max(1, container.value.clientWidth || window.innerWidth)
       const height = Math.max(1, container.value.clientHeight || window.innerHeight)
@@ -775,17 +836,17 @@ function keepControlPanelInViewport() {
   controlPanelPosition.y = next.y
 }
 
-const squareRes = ref(3) // 3x3 = 9 triangles
+const squareRes = ref(5) // 5x5 = 25 triangles
 const animationPaused = ref(false)
 const colorLayoutMode = ref(false)
 
 const colorA = reactive({ h: 79, s: 0.98, v: 0.90 })
 const colorB = reactive({ h: 92, s: 1.00, v: 0.45 })
 const textColorA = reactive({ h: 360, s: 1.00, v: 0.38 })
-const textColorB = reactive({ h: 314, s: 0.69, v: 1.00 })
+const textColorB = reactive({ h: 250, s: 0.69, v: 1.00 })
 
-const sizeMin = ref(18)
-const sizeMax = ref(585)
+const sizeMin = ref(13)
+const sizeMax = ref(210)
 const viewportScale = ref(1)
 const effectiveSizeMin = computed(() => sizeMin.value * viewportScale.value)
 const effectiveSizeMax = computed(() => sizeMax.value * viewportScale.value)
@@ -797,8 +858,8 @@ const pathCoverage = ref(0.98)
 const gravityEffect = ref(0.22)
 const rotationLag = ref(0.65)
 const trainSpread = ref(1)
-const edgeFrequency = ref(0.35)
-const edgeDepth = ref(10)
+const edgeFrequency = ref(0.25)
+const edgeDepth = ref(4.3)
 
 function clamp(min, val, max) {
   return Math.min(Math.max(val, min), max)
@@ -920,19 +981,19 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
   ctx.textBaseline = 'alphabetic'
 
   const margin = Math.max(24, Math.min(100, targetWidth * 0.065))
-  let titleSize = Math.max(28, Math.min(58, targetWidth * 0.038))
-  ctx.font = `500 ${titleSize}px "${appliedFont.value}", sans-serif`
+  let titleSize = titleTextSize.value
+  ctx.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
   const maxTitleWidth = targetWidth - margin * 2
   const measuredWidth = ctx.measureText('Tom Eijkelenkamp').width
   if (measuredWidth > maxTitleWidth) titleSize *= maxTitleWidth / measuredWidth
 
-  const subtitleSize = Math.max(12, titleSize * 0.23)
+  const subtitleSize = subtitleTextSize.value
   const subtitleY = targetHeight - margin
   const titleY = subtitleY - subtitleSize * 1.75
 
-  ctx.font = `500 ${titleSize}px "${appliedFont.value}", sans-serif`
+  ctx.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
   ctx.fillText('Tom Eijkelenkamp', margin, titleY)
-  ctx.font = `400 ${subtitleSize}px "${appliedFont.value}", sans-serif`
+  ctx.font = `${subtitleTextWeight.value} ${subtitleSize}px "${appliedFont.value}", sans-serif`
   ctx.fillText('Artist · Graphics · Algorithmic Design', margin, subtitleY)
 
   const containerRect = container.value?.getBoundingClientRect()
@@ -947,13 +1008,14 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
 
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.font = `500 ${fontSize}px "${appliedFont.value}", sans-serif`
+      ctx.font = `${navigationTextWeight.value} ${fontSize}px "${appliedFont.value}", sans-serif`
       ctx.fillText(label, centerX, centerY)
 
       const menuName = button.dataset.menu
       if (hoveredMenu.value === menuName || activeOverlay.value === menuName) {
         const textWidth = ctx.measureText(label).width
-        ctx.fillRect(centerX - textWidth / 2, centerY + fontSize * 0.62, textWidth, 1)
+        const underlineY = rect.bottom - containerRect.top - 1
+        ctx.fillRect(centerX - textWidth / 2, underlineY, textWidth, 1)
       }
     })
   }
@@ -1694,8 +1756,8 @@ function animate() {
       const viewWidth = bounds.x * 2
       const viewHeight = bounds.y * 2
       const margin = Math.max(24, Math.min(100, viewWidth * 0.065))
-      const titleSize = Math.max(28, Math.min(58, viewWidth * 0.038))
-      const subtitleSize = Math.max(12, titleSize * 0.23)
+      const titleSize = titleTextSize.value
+      const subtitleSize = subtitleTextSize.value
       const titleY = viewHeight - margin - subtitleSize * 1.75
       const lineWidth = Math.min(viewWidth - margin * 2, titleSize * 7.9)
       const triangleSize = clamp(
@@ -2134,6 +2196,24 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   gap: 0.55rem;
 }
 
+.typography-settings > strong {
+  display: block;
+  margin-bottom: 0.55rem;
+}
+
+.typography-control {
+  padding: 0.55rem;
+  border: 1px solid rgba(35, 72, 57, 0.12);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.typography-control > span {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+}
+
 .three-columns {
   display: grid;
   grid-template-columns: 1fr;
@@ -2144,12 +2224,12 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   position: absolute;
   /* margin from top/right scales with width */
   top: clamp(0.6rem, 0.4rem + 0.5vw, 0.8rem);
-  right: clamp(0.6rem, 0.4rem + 0.5vw, 0.8rem);
+  right: var(--menu-item-spacing, 30px);
 
   left: clamp(0.6rem, -2rem + 15vw, 3rem);
 
   display: flex;
-  gap: clamp(0.25rem, 0.2rem + 0.4vw, 0.7rem);
+  gap: var(--menu-item-spacing, 11px);
   z-index: 1200; /* above overlay (999) */
   align-items: center;
   justify-content: flex-end;
@@ -2167,9 +2247,9 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
   cursor: pointer;
 
   /* font size scales with width */
-  font-size: clamp(0.82rem, 0.74rem + 0.35vw, 1.15rem);
+  font-size: var(--navigation-text-size, 18px);
   font-family: var(--site-font, "Space Grotesk"), sans-serif;
-  font-weight: 500;
+  font-weight: var(--navigation-text-weight, 500);
   letter-spacing: -0.035em;
 }
 
@@ -2406,7 +2486,7 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
 .overlay {
   position: fixed;
-  inset: clamp(2.8rem, 2.55rem + 0.7vw, 3.35rem) 0 0;
+  inset: calc(var(--navigation-text-size, 18px) + 2rem) 0 0;
   background: rgba(248, 252, 248, 0.76);
   backdrop-filter: blur(32px);
   display: flex;
@@ -2437,7 +2517,8 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
 .overlay-content h2,
 .overlay-content h3 {
-  font-weight: 500;
+  font-size: var(--heading-text-size, 17px);
+  font-weight: var(--heading-text-weight, 500);
   letter-spacing: -0.035em;
 }
 
@@ -2460,7 +2541,8 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 .overlay-body {
   overflow-y: auto;
   max-height: 60vh;
-  font-size: 0.85rem;
+  font-size: var(--body-text-size, 14px);
+  font-weight: var(--body-text-weight, 400);
 }
 
 /* Balanced portfolio layouts */
@@ -2507,11 +2589,13 @@ watch([sizeMin, sizeMax, pathPointCount], () => {
 
 .research-text h3 {
   margin-bottom: 0.45rem;
-  font-size: clamp(0.9rem, 0.82rem + 0.18vw, 1.05rem);
+  font-size: var(--heading-text-size, 17px);
+  font-weight: var(--heading-text-weight, 500);
 }
 
 .research-text p {
-  font-size: clamp(0.78rem, 0.74rem + 0.12vw, 0.9rem);
+  font-size: var(--body-text-size, 14px);
+  font-weight: var(--body-text-weight, 400);
   line-height: 1.55;
   opacity: 0.78;
 }
