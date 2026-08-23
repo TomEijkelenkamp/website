@@ -302,6 +302,14 @@
             Train spread: {{ trainSpread.toFixed(2) }}
             <input type="range" min="0.15" max="1" step="0.01" v-model.number="trainSpread" />
           </label>
+          <label>
+            Edge frequency: {{ edgeFrequency.toFixed(2) }}
+            <input type="range" min="0.25" max="2" step="0.05" v-model.number="edgeFrequency" />
+          </label>
+          <label>
+            Edge depth: {{ edgeDepth.toFixed(1) }}
+            <input type="range" min="0" max="10" step="0.25" v-model.number="edgeDepth" />
+          </label>
         </section>
       </div>
 
@@ -771,13 +779,13 @@ const squareRes = ref(3) // 3x3 = 9 triangles
 const animationPaused = ref(false)
 const colorLayoutMode = ref(false)
 
-const colorA = reactive({ h: 95, s: 0.08, v: 0.97 })
-const colorB = reactive({ h: 105, s: 0.41, v: 0.95 })
-const textColorA = reactive({ h: 265, s: 1.00, v: 0.53 })
-const textColorB = reactive({ h: 244, s: 0.00, v: 1.00 })
+const colorA = reactive({ h: 79, s: 0.98, v: 0.90 })
+const colorB = reactive({ h: 92, s: 1.00, v: 0.45 })
+const textColorA = reactive({ h: 336, s: 1.00, v: 0.52 })
+const textColorB = reactive({ h: 314, s: 0.39, v: 1.00 })
 
 const sizeMin = ref(18)
-const sizeMax = ref(460)
+const sizeMax = ref(585)
 const viewportScale = ref(1)
 const effectiveSizeMin = computed(() => sizeMin.value * viewportScale.value)
 const effectiveSizeMax = computed(() => sizeMax.value * viewportScale.value)
@@ -789,6 +797,8 @@ const pathCoverage = ref(0.98)
 const gravityEffect = ref(0.22)
 const rotationLag = ref(0.65)
 const trainSpread = ref(1)
+const edgeFrequency = ref(0.25)
+const edgeDepth = ref(10)
 
 function clamp(min, val, max) {
   return Math.min(Math.max(val, min), max)
@@ -1574,6 +1584,8 @@ function createRenderMaterial() {
       uSizeMin: { value: effectiveSizeMin.value },
       uSizeMax: { value: effectiveSizeMax.value },
       uColorLayout: { value: 0 },
+      uEdgeFrequency: { value: edgeFrequency.value },
+      uEdgeDepth: { value: edgeDepth.value },
     },
     vertexShader: /* glsl */`
       precision highp float;
@@ -1608,30 +1620,43 @@ function createRenderMaterial() {
       uniform vec3 uColorA;
       uniform vec3 uColorB;
       uniform float uColorLayout;
+      uniform float uEdgeFrequency;
+      uniform float uEdgeDepth;
       varying float vSeed;
       varying float vPreviewSeed;
       varying vec3 vBarycentric;
       varying float vSize;
+
+      float sketchNoise(vec2 point) {
+        return fract(sin(dot(point, vec2(12.9898, 78.233))) * 43758.5453);
+      }
 
       void main() {
         float randomT = fract(sin(vSeed * 43758.5453123) * 43758.5453123);
         float t = mix(randomT, vPreviewSeed, uColorLayout);
         vec3 col = mix(uColorA, uColorB, t);
 
-        // distance to the closest edge of the triangle
         float edgeDist = min(min(vBarycentric.x, vBarycentric.y), vBarycentric.z);
 
-        // ---- size-aware AA width ----
-        // base width in barycentric space for a "medium" particle
-        float baseWidth = 1.0; // tune
+        // Layered waves give every edge a slightly different hand-drawn wobble.
+        float strokeSeed = vSeed * 41.73;
+        float waveA = sin(
+          (gl_FragCoord.x * 0.037 + gl_FragCoord.y * 0.021) * uEdgeFrequency
+          + strokeSeed
+        );
+        float waveB = sin(
+          (gl_FragCoord.x * 0.011 - gl_FragCoord.y * 0.045) * uEdgeFrequency
+          - strokeSeed * 1.7
+        );
+        float wobblePixels = uEdgeDepth
+          * (1.0 + waveA * 0.4375 + waveB * 0.296875);
+        float edge = wobblePixels / max(vSize, 1.0);
+        float feather = 0.60 / max(vSize, 1.0);
+        float alpha = smoothstep(edge - feather, edge + feather, edgeDist);
 
-        // Inverse relationship: larger size → smaller smoothing region
-        float width = 0.75 / max(vSize, 0.0001);
-
-        // Prevent extreme values
-        // width = clamp(width, 0.01, 0.15);
-        
-        float alpha = smoothstep(0.0, width, edgeDist);
+        // A paper-like fill keeps the shape organic without a dark outline.
+        float grain = sketchNoise(floor(gl_FragCoord.xy * 0.55) + strokeSeed);
+        col *= 0.965 + grain * 0.07;
 
         gl_FragColor = vec4(col, alpha);
       }
@@ -1732,6 +1757,8 @@ function animate() {
     renderMesh.material.uniforms.uSizeMin.value = effectiveSizeMin.value
     renderMesh.material.uniforms.uSizeMax.value = effectiveSizeMax.value
     renderMesh.material.uniforms.uColorLayout.value = colorLayoutMode.value ? 1 : 0
+    renderMesh.material.uniforms.uEdgeFrequency.value = edgeFrequency.value
+    renderMesh.material.uniforms.uEdgeDepth.value = edgeDepth.value
   }
 
   if (postMesh) {
