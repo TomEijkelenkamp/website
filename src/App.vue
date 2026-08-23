@@ -829,9 +829,9 @@ const animationPaused = ref(false)
 const colorLayoutMode = ref(false)
 
 const colorA = reactive({ h: 79, s: 0.98, v: 0.90 })
-const colorB = reactive({ h: 92, s: 1.00, v: 0.45 })
+const colorB = reactive({ h: 92, s: 0.15283059013444267, v: 1.00 })
 const textColorA = reactive({ h: 358, s: 1.00, v: 0.44838739210559475 })
-const textColorB = reactive({ h: 250, s: 0.00, v: 1.00 })
+const textColorB = reactive({ h: 346, s: 0.5626751922315041, v: 1.00 })
 
 const sizeMin = ref(13)
 const sizeMax = ref(255)
