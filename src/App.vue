@@ -287,10 +287,6 @@
             <input type="range" min="0.35" max="1" step="0.01" v-model.number="pathCoverage" />
           </label>
           <label>
-            Gravity feel: {{ gravityEffect.toFixed(2) }}
-            <input type="range" min="0" max="0.8" step="0.01" v-model.number="gravityEffect" />
-          </label>
-          <label>
             Rotation lag: {{ rotationLag.toFixed(2) }}
             <input type="range" min="0.1" max="3" step="0.05" v-model.number="rotationLag" />
           </label>
@@ -320,22 +316,14 @@
         <section>
           <label>
             Train spread: {{ trainSpread.toFixed(2) }}
-            <input type="range" min="0.15" max="1" step="0.01" v-model.number="trainSpread" />
-          </label>
-          <label>
-            Edge frequency: {{ edgeFrequency.toFixed(2) }}
-            <input type="range" min="0.25" max="2" step="0.05" v-model.number="edgeFrequency" />
-          </label>
-          <label>
-            Edge depth: {{ edgeDepth.toFixed(1) }}
-            <input type="range" min="0" max="10" step="0.25" v-model.number="edgeDepth" />
+            <input type="range" min="0.05" max="3" step="0.01" v-model.number="trainSpread" />
           </label>
         </section>
       </div>
 
       <div class="color-picker-grid">
-        <HsvColorPicker label="Text color A" v-bind="textColorA" @update="Object.assign(textColorA, $event)" />
-        <HsvColorPicker label="Text color B" v-bind="textColorB" @update="Object.assign(textColorB, $event)" />
+        <HsvColorPicker label="Text color" v-bind="textColorA" @update="Object.assign(textColorA, $event)" />
+        <HsvColorPicker label="Text cutout color" v-bind="textColorB" @update="Object.assign(textColorB, $event)" />
       </div>
       <section>
         <div class="gradient-bar" :style="{ background: textGradientCss }"></div>
@@ -696,16 +684,16 @@ const fontOptions = fontGroups.flatMap(group => group.fonts)
 const selectedFont = ref('Marcellus')
 const appliedFont = ref('Marcellus Local')
 const fontLoading = ref(false)
-const titleTextSize = ref(61)
+const titleTextSize = ref(54)
 const titleTextWeight = ref(700)
-const subtitleTextSize = ref(30)
+const subtitleTextSize = ref(20)
 const subtitleTextWeight = ref(600)
-const navigationTextSize = ref(32)
+const navigationTextSize = ref(21)
 const navigationTextWeight = ref(700)
 const menuItemSpacing = ref(30)
-const headingTextSize = ref(27)
+const headingTextSize = ref(21)
 const headingTextWeight = ref(600)
-const bodyTextSize = ref(16)
+const bodyTextSize = ref(14)
 const bodyTextWeight = ref(400)
 const typographyViewportScale = ref(1)
 const typographyControls = [
@@ -836,17 +824,17 @@ function keepControlPanelInViewport() {
   controlPanelPosition.y = next.y
 }
 
-const squareRes = ref(4) // 4x4 = 16 triangles
+const squareRes = ref(3) // 3x3 = 9 triangles
 const animationPaused = ref(false)
 const colorLayoutMode = ref(false)
 
 const colorA = reactive({ h: 79, s: 0.98, v: 0.90 })
 const colorB = reactive({ h: 92, s: 1.00, v: 0.45 })
-const textColorA = reactive({ h: 358, s: 1.00, v: 0.72 })
+const textColorA = reactive({ h: 358, s: 1.00, v: 0.44838739210559475 })
 const textColorB = reactive({ h: 250, s: 0.00, v: 1.00 })
 
 const sizeMin = ref(13)
-const sizeMax = ref(210)
+const sizeMax = ref(255)
 const viewportScale = ref(1)
 const effectiveSizeMin = computed(() => sizeMin.value * viewportScale.value)
 const effectiveSizeMax = computed(() => sizeMax.value * viewportScale.value)
@@ -854,11 +842,8 @@ const pathSpeed = ref(160)
 const effectivePathSpeed = computed(() => pathSpeed.value * viewportScale.value)
 const pathPointCount = ref(14)
 const pathCoverage = ref(0.98)
-const gravityEffect = ref(0.22)
 const rotationLag = ref(0.65)
-const trainSpread = ref(1)
-const edgeFrequency = ref(0.25)
-const edgeDepth = ref(4.3)
+const trainSpread = ref(2.01)
 
 function clamp(min, val, max) {
   return Math.min(Math.max(val, min), max)
@@ -878,7 +863,7 @@ const gradientCss = computed(() => {
 const textGradientCss = computed(() => {
   const ca = hsvToCss(textColorA.h, textColorA.s, textColorA.v)
   const cb = hsvToCss(textColorB.h, textColorB.s, textColorB.v)
-  return `linear-gradient(to right, ${ca}, ${cb})`
+  return `linear-gradient(to right, ${ca} 0 50%, ${cb} 50% 100%)`
 })
 
 // three.js objects
@@ -1140,18 +1125,10 @@ function createPostMaterial(simTex, textTex, screenSize) {
         ));
         float coverage = smoothstep(0.012, 0.040, shapeSignal);
 
-        // React to brightness rather than hue or saturation: the text stays
-        // dark on the pale paper and becomes lighter as the shape behind it
-        // gets darker.
-        float paperValue = 0.992;
-        float valueRange = max(paperValue - uBgHSV_B.z, 0.00001);
-        float darkness = clamp(
-          (paperValue - baseHSV.z) / valueRange,
-          0.0,
-          1.0
-        );
-        float lightening = coverage * smoothstep(0.05, 0.85, darkness);
-        vec3 textHSV = mix(uTextHSV_A, uTextHSV_B, lightening);
+        // Use a hard color switch for the cutout: A on paper, B wherever a
+        // triangle crosses the text. There is no A-to-B color gradient.
+        float cutout = step(0.5, coverage);
+        vec3 textHSV = mix(uTextHSV_A, uTextHSV_B, cutout);
 
         // 4) Convert to RGB
         vec3 textRGB = hsv2rgb(textHSV);
@@ -1385,6 +1362,29 @@ function splinePoint(points, progress) {
   )
 }
 
+function advanceSplineByDistance(points, startProgress, distance) {
+  let progress = startProgress
+  let remaining = Math.max(0, distance)
+  let current = splinePoint(points, progress)
+  const maxProgress = Math.max(0.001, points.length - 3.001)
+  const progressStep = 0.005
+
+  for (let iteration = 0; iteration < 1000 && remaining > 0.0001; iteration++) {
+    const nextProgress = Math.min(maxProgress, progress + progressStep)
+    if (nextProgress <= progress) break
+    const next = splinePoint(points, nextProgress)
+    const segmentDistance = current.distanceTo(next)
+    if (segmentDistance >= remaining && segmentDistance > 0.000001) {
+      return progress + (nextProgress - progress) * (remaining / segmentDistance)
+    }
+    remaining -= segmentDistance
+    progress = nextProgress
+    current = next
+  }
+
+  return progress
+}
+
 let pendingSplinePoints = []
 let scheduledQuadrant = 2
 let anchorAfterIntermediate = 1
@@ -1523,7 +1523,16 @@ function createSplineState(seed) {
     seed,
     size,
     angle: Math.random() * Math.PI * 2,
+    progress: 0,
   }
+}
+
+function resetSplineProgresses() {
+  if (!sharedSpline) return
+  const initialSpacing = 0.52 * trainSpread.value
+  splineStates.forEach((state, index) => {
+    state.progress = Math.max(0, sharedSpline.progress - index * initialSpacing)
+  })
 }
 
 function buildSimulation(res) {
@@ -1571,14 +1580,6 @@ function buildSimulation(res) {
     0.8660254, -0.5, 0.0,
   ])
   triangle.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
-    
-  // NEW: barycentric coords per vertex
-  const bary = new Float32Array([
-    1, 0, 0,  // vertex 0
-    0, 1, 0,  // vertex 1
-    0, 0, 1,  // vertex 2
-  ])
-  triangle.setAttribute('aBarycentric', new THREE.BufferAttribute(bary, 3))
 
   const instanced = new THREE.InstancedMesh(triangle, createRenderMaterial(), count)
 
@@ -1595,13 +1596,17 @@ function buildSimulation(res) {
   scene.add(instanced)
   renderMesh = instanced
   splineStates = seeds.map(createSplineState)
-  const points = createSharedSplinePoints()
+  const initialSpacing = 0.52 * trainSpread.value
+  const initialProgress = Math.max(7, (splineStates.length - 1) * initialSpacing + 1)
+  const initialPointCount = Math.max(pathPointCount.value, Math.ceil(initialProgress + 8))
+  const points = createSharedSplinePoints(initialPointCount)
   sharedSpline = {
     points,
-    progress: Math.min(7, points.length - 5),
+    progress: Math.min(initialProgress, points.length - 5),
     speed: effectivePathSpeed.value,
     baseSpeed: effectivePathSpeed.value,
   }
+  resetSplineProgresses()
 }
 
 function fillPositionTexture(texture, bounds, seeds) {
@@ -1742,11 +1747,7 @@ function createRenderMaterial() {
     uniforms: {
       uColorA: { value: new THREE.Color() },
       uColorB: { value: new THREE.Color() },
-      uSizeMin: { value: effectiveSizeMin.value },
-      uSizeMax: { value: effectiveSizeMax.value },
       uColorLayout: { value: 0 },
-      uEdgeFrequency: { value: edgeFrequency.value },
-      uEdgeDepth: { value: edgeDepth.value },
     },
     vertexShader: /* glsl */`
       precision highp float;
@@ -1755,22 +1756,14 @@ function createRenderMaterial() {
       attribute mat4 instanceMatrix;
       uniform mat4 projectionMatrix;
       uniform mat4 modelViewMatrix;
-      uniform float uSizeMin;
-      uniform float uSizeMax;
       varying float vSeed;
       attribute float aPreviewSeed;
       varying float vPreviewSeed;
-      attribute vec3 aBarycentric;
-      varying vec3 vBarycentric;
-      varying float vSize;
 
       
       void main() {
-        float size = uSizeMin + (uSizeMax - uSizeMin) * aSeed;
-        vSize = size;
         vSeed = aSeed;
         vPreviewSeed = aPreviewSeed;
-        vBarycentric = aBarycentric;
         vec4 worldPosition = instanceMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * modelViewMatrix * worldPosition;
       }
@@ -1781,59 +1774,15 @@ function createRenderMaterial() {
       uniform vec3 uColorA;
       uniform vec3 uColorB;
       uniform float uColorLayout;
-      uniform float uEdgeFrequency;
-      uniform float uEdgeDepth;
       varying float vSeed;
       varying float vPreviewSeed;
-      varying vec3 vBarycentric;
-      varying float vSize;
 
       void main() {
         float randomT = fract(sin(vSeed * 43758.5453123) * 43758.5453123);
         float t = mix(randomT, vPreviewSeed, uColorLayout);
         vec3 col = mix(uColorA, uColorB, t);
 
-        // Blend all three local edges continuously. This avoids angular seams
-        // where the closest edge changes and rounds the contour transitions.
-        float strokeSeed = vSeed * 41.73;
-        vec3 edgePixels = vBarycentric * vSize;
-        vec3 edgeWeights = exp(-edgePixels * 0.55);
-        edgeWeights /= max(edgeWeights.x + edgeWeights.y + edgeWeights.z, 0.0001);
-
-        vec3 alongEdges = vec3(
-          (vBarycentric.y - vBarycentric.z) * vSize,
-          (vBarycentric.z - vBarycentric.x) * vSize,
-          (vBarycentric.x - vBarycentric.y) * vSize
-        );
-        vec3 phases = vec3(0.0, 2.0943951, 4.1887902);
-        vec3 wavesA = sin(
-          alongEdges * (0.050 * uEdgeFrequency)
-          + vec3(strokeSeed)
-          + phases
-        );
-        vec3 wavesB = sin(
-          alongEdges * (0.024 * uEdgeFrequency)
-          - vec3(strokeSeed * 1.7)
-          - phases * 0.65
-        );
-        float waveA = dot(wavesA, edgeWeights);
-        float waveB = dot(wavesB, edgeWeights);
-        float wobblePixels = uEdgeDepth
-          * (1.0 + waveA * 0.4375 + waveB * 0.296875);
-
-        float smoothEdgePixels = -log(max(
-          exp(-edgePixels.x * 0.55)
-          + exp(-edgePixels.y * 0.55)
-          + exp(-edgePixels.z * 0.55),
-          0.000001
-        )) / 0.55;
-        float alpha = smoothstep(
-          wobblePixels - 0.75,
-          wobblePixels + 0.75,
-          smoothEdgePixels
-        );
-
-        gl_FragColor = vec4(col, alpha);
+        gl_FragColor = vec4(col, 1.0);
       }
     `,
     transparent: true,
@@ -1875,33 +1824,37 @@ function animate() {
         renderMesh.setMatrixAt(index, matrix)
       })
       renderMesh.instanceMatrix.needsUpdate = true
-    } else if (!animationPaused.value) {
-      const leader = splinePoint(sharedSpline.points, sharedSpline.progress)
-      const leaderAhead = splinePoint(sharedSpline.points, sharedSpline.progress + 0.01)
-      const leaderTangent = leaderAhead.clone().sub(leader).normalize()
+    } else if (!animationPaused.value && activeOverlay.value === null) {
       sharedSpline.baseSpeed = effectivePathSpeed.value
-      const targetSpeed = sharedSpline.baseSpeed * (
-        1 + Math.max(0, -leaderTangent.y) * gravityEffect.value
-        - Math.max(0, leaderTangent.y) * gravityEffect.value * 0.5
-      )
-      sharedSpline.speed += (targetSpeed - sharedSpline.speed) * (1 - Math.exp(-0.65 * dt))
-      const pixelsPerProgress = Math.max(20, leader.distanceTo(leaderAhead) * 100)
-      sharedSpline.progress += sharedSpline.speed * dt / pixelsPerProgress
+      sharedSpline.speed = sharedSpline.baseSpeed
 
       while (sharedSpline.points.length - 3 - sharedSpline.progress < 5) {
         sharedSpline.points.push(createNextSplinePoint(sharedSpline.points))
       }
 
-      const pointSpacing = 0.52 * trainSpread.value
-      let tailProgress = sharedSpline.progress - (splineStates.length - 1) * pointSpacing
-      while (tailProgress > 2.5 && sharedSpline.points.length > pathPointCount.value) {
+      const frameDistance = sharedSpline.speed * dt
+      splineStates.forEach((state) => {
+        state.progress = advanceSplineByDistance(
+          sharedSpline.points,
+          state.progress,
+          frameDistance,
+        )
+      })
+      sharedSpline.progress = splineStates[0]?.progress ?? sharedSpline.progress
+
+      let earliestProgress = splineStates.reduce(
+        (earliest, state) => Math.min(earliest, state.progress),
+        sharedSpline.progress,
+      )
+      while (earliestProgress > 2.5 && sharedSpline.points.length > pathPointCount.value) {
         sharedSpline.points.shift()
         sharedSpline.progress -= 1
-        tailProgress -= 1
+        splineStates.forEach((state) => { state.progress -= 1 })
+        earliestProgress -= 1
       }
 
       splineStates.forEach((state, index) => {
-        const progress = Math.max(0, sharedSpline.progress - index * pointSpacing)
+        const progress = state.progress
         const here = splinePoint(sharedSpline.points, progress)
         const ahead = splinePoint(sharedSpline.points, progress + 0.01)
         const tangent = ahead.clone().sub(here).normalize()
@@ -1929,11 +1882,7 @@ function animate() {
     const cb = hsvToRgb(colorB.h, colorB.s, colorB.v)
     renderMesh.material.uniforms.uColorA.value.set(ca.r, ca.g, ca.b)
     renderMesh.material.uniforms.uColorB.value.set(cb.r, cb.g, cb.b)
-    renderMesh.material.uniforms.uSizeMin.value = effectiveSizeMin.value
-    renderMesh.material.uniforms.uSizeMax.value = effectiveSizeMax.value
     renderMesh.material.uniforms.uColorLayout.value = colorLayoutMode.value ? 1 : 0
-    renderMesh.material.uniforms.uEdgeFrequency.value = edgeFrequency.value
-    renderMesh.material.uniforms.uEdgeDepth.value = edgeDepth.value
   }
 
   if (postMesh) {
@@ -1993,6 +1942,7 @@ function onResize() {
     const points = createSharedSplinePoints(sharedSpline.points.length)
     sharedSpline.points = points
     sharedSpline.progress = Math.min(7, points.length - 5)
+    resetSplineProgresses()
   }
   if (textFontReady) loadSvgAsTexture(img, w, h)
   keepControlPanelInViewport()
@@ -2026,13 +1976,10 @@ function exportSettings() {
       pathSpeed: pathSpeed.value,
       lookAheadPoints: pathPointCount.value,
       screenCoverage: pathCoverage.value,
-      gravityFeel: gravityEffect.value,
       rotationLag: rotationLag.value,
       minSize: sizeMin.value,
       maxSize: sizeMax.value,
       trainSpread: trainSpread.value,
-      edgeFrequency: edgeFrequency.value,
-      edgeDepth: edgeDepth.value,
     },
     colors: {
       triangleA: { ...colorA },
@@ -2092,6 +2039,9 @@ watch(sizeMax, (val) => {
   if (val < sizeMin.value) sizeMin.value = val
 })
 watch([sizeMin, sizeMax, pathPointCount], () => {
+  if (renderer && scene) buildSimulation(squareRes.value)
+})
+watch(trainSpread, () => {
   if (renderer && scene) buildSimulation(squareRes.value)
 })
 </script>
