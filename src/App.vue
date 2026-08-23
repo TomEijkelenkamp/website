@@ -781,7 +781,7 @@ const colorLayoutMode = ref(false)
 
 const colorA = reactive({ h: 79, s: 0.98, v: 0.90 })
 const colorB = reactive({ h: 92, s: 1.00, v: 0.45 })
-const textColorA = reactive({ h: 336, s: 1.00, v: 0.52 })
+const textColorA = reactive({ h: 360, s: 1.00, v: 0.52 })
 const textColorB = reactive({ h: 314, s: 0.39, v: 1.00 })
 
 const sizeMin = ref(18)
@@ -1627,10 +1627,6 @@ function createRenderMaterial() {
       varying vec3 vBarycentric;
       varying float vSize;
 
-      float sketchNoise(vec2 point) {
-        return fract(sin(dot(point, vec2(12.9898, 78.233))) * 43758.5453);
-      }
-
       void main() {
         float randomT = fract(sin(vSeed * 43758.5453123) * 43758.5453123);
         float t = mix(randomT, vPreviewSeed, uColorLayout);
@@ -1653,10 +1649,6 @@ function createRenderMaterial() {
         float edge = wobblePixels / max(vSize, 1.0);
         float feather = 0.60 / max(vSize, 1.0);
         float alpha = smoothstep(edge - feather, edge + feather, edgeDist);
-
-        // A paper-like fill keeps the shape organic without a dark outline.
-        float grain = sketchNoise(floor(gl_FragCoord.xy * 0.55) + strokeSeed);
-        col *= 0.965 + grain * 0.07;
 
         gl_FragColor = vec4(col, alpha);
       }
