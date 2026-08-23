@@ -219,6 +219,9 @@
         <button type="button" :class="{ active: colorLayoutMode }" @click="colorLayoutMode = !colorLayoutMode">
           {{ colorLayoutMode ? 'Follow spline' : 'Color line' }}
         </button>
+        <button type="button" @click="exportSettings">
+          Export settings
+        </button>
       </div>
 
       <section class="font-library">
@@ -271,10 +274,6 @@
           <label>
             Path speed (desktop): {{ pathSpeed.toFixed(0) }}
             <input type="range" min="10" max="160" step="1" v-model.number="pathSpeed" />
-          </label>
-          <label>
-            Turn freedom: {{ pathMorphSpeed.toFixed(2) }}
-            <input type="range" min="0.1" max="1" step="0.05" v-model.number="pathMorphSpeed" />
           </label>
         </section>
 
@@ -836,23 +835,22 @@ function keepControlPanelInViewport() {
   controlPanelPosition.y = next.y
 }
 
-const squareRes = ref(5) // 5x5 = 25 triangles
+const squareRes = ref(4) // 4x4 = 16 triangles
 const animationPaused = ref(false)
 const colorLayoutMode = ref(false)
 
 const colorA = reactive({ h: 79, s: 0.98, v: 0.90 })
 const colorB = reactive({ h: 92, s: 1.00, v: 0.45 })
-const textColorA = reactive({ h: 360, s: 1.00, v: 0.38 })
-const textColorB = reactive({ h: 250, s: 0.69, v: 1.00 })
+const textColorA = reactive({ h: 358, s: 1.00, v: 0.72 })
+const textColorB = reactive({ h: 250, s: 0.00, v: 1.00 })
 
 const sizeMin = ref(13)
 const sizeMax = ref(210)
 const viewportScale = ref(1)
 const effectiveSizeMin = computed(() => sizeMin.value * viewportScale.value)
 const effectiveSizeMax = computed(() => sizeMax.value * viewportScale.value)
-const pathSpeed = ref(58)
+const pathSpeed = ref(160)
 const effectivePathSpeed = computed(() => pathSpeed.value * viewportScale.value)
-const pathMorphSpeed = ref(0.55)
 const pathPointCount = ref(14)
 const pathCoverage = ref(0.98)
 const gravityEffect = ref(0.22)
@@ -1385,34 +1383,131 @@ function splinePoint(points, progress) {
   )
 }
 
-function randomScreenPoint() {
-  return new THREE.Vector2(
-    (Math.random() * 2 - 1) * Math.max(40, bounds.x - 30) * pathCoverage.value,
-    (Math.random() * 2 - 1) * Math.max(40, bounds.y - 30) * pathCoverage.value
-  )
+let pendingSplinePoints = []
+let scheduledQuadrant = 2
+let anchorAfterIntermediate = 1
+
+function randomQuadrantDestination() {
+  // Alternate the two anchor segments (bottom-left and top-right). Between
+  // them, visit exactly one randomly selected side segment.
+  const quadrant = scheduledQuadrant
+  if (quadrant === 2) {
+    anchorAfterIntermediate = 1
+    scheduledQuadrant = Math.random() < 0.5 ? 0 : 3
+  } else if (quadrant === 1) {
+    anchorAfterIntermediate = 2
+    scheduledQuadrant = Math.random() < 0.5 ? 0 : 3
+  } else {
+    scheduledQuadrant = anchorAfterIntermediate
+  }
+  const right = quadrant % 2 === 1
+  const top = quadrant < 2
+  const extentX = Math.max(40, bounds.x - 30) * pathCoverage.value
+  const extentY = Math.max(40, bounds.y - 30) * pathCoverage.value
+  return {
+    quadrant,
+    point: new THREE.Vector2(
+      (right ? 1 : -1) * Math.random() * extentX,
+      (top ? 1 : -1) * Math.random() * extentY,
+    ),
+  }
 }
 
-function createNextSplinePoint(points) {
-  if (points.length < 2) return randomScreenPoint()
-  const previous = points[points.length - 2]
-  const last = points[points.length - 1]
-  const forward = last.clone().sub(previous).normalize()
-  const minDistance = Math.min(bounds.x, bounds.y) * 0.35
+function randomScreenPoint() {
+  return randomQuadrantDestination().point
+}
 
-  for (let attempt = 0; attempt < 24; attempt++) {
-    const candidate = randomScreenPoint()
-    const direction = candidate.clone().sub(last)
-    if (direction.length() < minDistance) continue
-    direction.normalize()
-    const minimumDot = -0.15 - pathMorphSpeed.value * 0.70
-    if (direction.dot(forward) > minimumDot) return candidate
+function menuSplinePoints() {
+  const containerRect = container.value?.getBoundingClientRect()
+  if (!containerRect) return []
+
+  const points = Array.from(document.querySelectorAll('.top-bar button[data-menu]')).map((button) => {
+    const rect = button.getBoundingClientRect()
+    return new THREE.Vector2(
+      rect.left - containerRect.left + rect.width / 2 - bounds.x,
+      bounds.y - (rect.top - containerRect.top + rect.height / 2),
+    )
+  })
+  if (!points.length) return points
+
+  const entry = points[0].clone()
+  const exit = points[points.length - 1].clone()
+  entry.x = Math.max(-bounds.x, entry.x - menuItemSpacing.value * 0.5)
+  exit.x = Math.min(bounds.x, exit.x + menuItemSpacing.value * 0.5)
+  return [entry, ...points, exit]
+}
+
+function homeTextSplinePoints() {
+  const containerRect = container.value?.getBoundingClientRect()
+  if (!containerRect) return []
+
+  const width = containerRect.width
+  const height = containerRect.height
+  const margin = Math.max(24, Math.min(100, width * 0.065))
+  let titleSize = titleTextSize.value
+  const measureCanvas = document.createElement('canvas')
+  const measureContext = measureCanvas.getContext('2d')
+  measureContext.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
+  const maxTitleWidth = width - margin * 2
+  const initialTitleWidth = measureContext.measureText('Tom Eijkelenkamp').width
+  if (initialTitleWidth > maxTitleWidth) titleSize *= maxTitleWidth / initialTitleWidth
+
+  measureContext.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
+  const titleWidth = measureContext.measureText('Tom Eijkelenkamp').width
+  measureContext.font = `${subtitleTextWeight.value} ${subtitleTextSize.value}px "${appliedFont.value}", sans-serif`
+  const subtitleWidth = measureContext.measureText('Artist · Graphics · Algorithmic Design').width
+
+  const subtitleY = height - margin
+  const titleY = subtitleY - subtitleTextSize.value * 1.75
+  const toWorld = (screenX, screenY) => new THREE.Vector2(
+    screenX - bounds.x,
+    bounds.y - screenY,
+  )
+  const linePoints = (startX, endX, screenY) => [
+    toWorld(startX, screenY),
+    toWorld((startX + endX) / 2, screenY),
+    toWorld(endX, screenY),
+  ]
+
+  const titleCenterY = titleY - titleSize * 0.35
+  const subtitleCenterY = subtitleY - subtitleTextSize.value * 0.35
+  return [
+    ...linePoints(margin, margin + titleWidth, titleCenterY),
+    ...linePoints(margin + subtitleWidth, margin, subtitleCenterY),
+  ]
+}
+
+function createNextSplinePoint() {
+  if (pendingSplinePoints.length) return pendingSplinePoints.shift()
+  const destination = randomQuadrantDestination()
+  const candidate = destination.point
+
+  // Quadrant 1 is the top-right segment. Enter left of Research, travel
+  // across every menu label, then continue towards the sampled target.
+  if (destination.quadrant === 1) {
+    const menuPoints = menuSplinePoints()
+    if (menuPoints.length) {
+      pendingSplinePoints.push(...menuPoints, candidate)
+      return pendingSplinePoints.shift()
+    }
   }
-
-  return randomScreenPoint()
+  // Quadrant 2 is bottom-left. Sweep across the title and subtitle before
+  // continuing towards the sampled destination in that segment.
+  if (destination.quadrant === 2) {
+    const textPoints = homeTextSplinePoints()
+    if (textPoints.length) {
+      pendingSplinePoints.push(...textPoints, candidate)
+      return pendingSplinePoints.shift()
+    }
+  }
+  return candidate
 }
 
 function createSharedSplinePoints(pointCount = pathPointCount.value) {
-  const points = [randomScreenPoint(), randomScreenPoint()]
+  pendingSplinePoints = []
+  scheduledQuadrant = 2
+  anchorAfterIntermediate = 1
+  const points = [randomScreenPoint()]
   while (points.length < pointCount) points.push(createNextSplinePoint(points))
   return points
 }
@@ -1915,6 +2010,52 @@ function onKeyDown(e) {
     e.preventDefault()
     controlPanelOpen.value = !controlPanelOpen.value
   }
+}
+
+function exportSettings() {
+  const settings = {
+    version: 1,
+    font: selectedFont.value,
+    simulation: {
+      triangleGrid: squareRes.value,
+      pathSpeed: pathSpeed.value,
+      lookAheadPoints: pathPointCount.value,
+      screenCoverage: pathCoverage.value,
+      gravityFeel: gravityEffect.value,
+      rotationLag: rotationLag.value,
+      minSize: sizeMin.value,
+      maxSize: sizeMax.value,
+      trainSpread: trainSpread.value,
+      edgeFrequency: edgeFrequency.value,
+      edgeDepth: edgeDepth.value,
+    },
+    colors: {
+      triangleA: { ...colorA },
+      triangleB: { ...colorB },
+      textA: { ...textColorA },
+      textB: { ...textColorB },
+    },
+    typography: {
+      mainTitle: { size: titleTextSize.value, weight: titleTextWeight.value },
+      subtitle: { size: subtitleTextSize.value, weight: subtitleTextWeight.value },
+      navigation: {
+        size: navigationTextSize.value,
+        weight: navigationTextWeight.value,
+        spacing: menuItemSpacing.value,
+      },
+      contentTitles: { size: headingTextSize.value, weight: headingTextWeight.value },
+      bodyText: { size: bodyTextSize.value, weight: bodyTextWeight.value },
+    },
+  }
+  const blob = new Blob([`${JSON.stringify(settings, null, 2)}\n`], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'website-settings.json'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
 // HSV helpers
