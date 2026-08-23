@@ -781,8 +781,8 @@ const colorLayoutMode = ref(false)
 
 const colorA = reactive({ h: 79, s: 0.98, v: 0.90 })
 const colorB = reactive({ h: 92, s: 1.00, v: 0.45 })
-const textColorA = reactive({ h: 360, s: 1.00, v: 0.52 })
-const textColorB = reactive({ h: 314, s: 0.39, v: 1.00 })
+const textColorA = reactive({ h: 360, s: 1.00, v: 0.38 })
+const textColorB = reactive({ h: 314, s: 0.69, v: 1.00 })
 
 const sizeMin = ref(18)
 const sizeMax = ref(585)
@@ -797,7 +797,7 @@ const pathCoverage = ref(0.98)
 const gravityEffect = ref(0.22)
 const rotationLag = ref(0.65)
 const trainSpread = ref(1)
-const edgeFrequency = ref(0.25)
+const edgeFrequency = ref(0.35)
 const edgeDepth = ref(10)
 
 function clamp(min, val, max) {
@@ -1632,23 +1632,45 @@ function createRenderMaterial() {
         float t = mix(randomT, vPreviewSeed, uColorLayout);
         vec3 col = mix(uColorA, uColorB, t);
 
-        float edgeDist = min(min(vBarycentric.x, vBarycentric.y), vBarycentric.z);
-
-        // Layered waves give every edge a slightly different hand-drawn wobble.
+        // Blend all three local edges continuously. This avoids angular seams
+        // where the closest edge changes and rounds the contour transitions.
         float strokeSeed = vSeed * 41.73;
-        float waveA = sin(
-          (gl_FragCoord.x * 0.037 + gl_FragCoord.y * 0.021) * uEdgeFrequency
-          + strokeSeed
+        vec3 edgePixels = vBarycentric * vSize;
+        vec3 edgeWeights = exp(-edgePixels * 0.55);
+        edgeWeights /= max(edgeWeights.x + edgeWeights.y + edgeWeights.z, 0.0001);
+
+        vec3 alongEdges = vec3(
+          (vBarycentric.y - vBarycentric.z) * vSize,
+          (vBarycentric.z - vBarycentric.x) * vSize,
+          (vBarycentric.x - vBarycentric.y) * vSize
         );
-        float waveB = sin(
-          (gl_FragCoord.x * 0.011 - gl_FragCoord.y * 0.045) * uEdgeFrequency
-          - strokeSeed * 1.7
+        vec3 phases = vec3(0.0, 2.0943951, 4.1887902);
+        vec3 wavesA = sin(
+          alongEdges * (0.050 * uEdgeFrequency)
+          + vec3(strokeSeed)
+          + phases
         );
+        vec3 wavesB = sin(
+          alongEdges * (0.024 * uEdgeFrequency)
+          - vec3(strokeSeed * 1.7)
+          - phases * 0.65
+        );
+        float waveA = dot(wavesA, edgeWeights);
+        float waveB = dot(wavesB, edgeWeights);
         float wobblePixels = uEdgeDepth
           * (1.0 + waveA * 0.4375 + waveB * 0.296875);
-        float edge = wobblePixels / max(vSize, 1.0);
-        float feather = 0.60 / max(vSize, 1.0);
-        float alpha = smoothstep(edge - feather, edge + feather, edgeDist);
+
+        float smoothEdgePixels = -log(max(
+          exp(-edgePixels.x * 0.55)
+          + exp(-edgePixels.y * 0.55)
+          + exp(-edgePixels.z * 0.55),
+          0.000001
+        )) / 0.55;
+        float alpha = smoothstep(
+          wobblePixels - 0.75,
+          wobblePixels + 0.75,
+          smoothEdgePixels
+        );
 
         gl_FragColor = vec4(col, alpha);
       }
