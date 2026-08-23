@@ -707,6 +707,7 @@ const headingTextSize = ref(27)
 const headingTextWeight = ref(600)
 const bodyTextSize = ref(16)
 const bodyTextWeight = ref(400)
+const typographyViewportScale = ref(1)
 const typographyControls = [
   { label: 'Main title', size: titleTextSize, weight: titleTextWeight, min: 24, max: 96 },
   { label: 'Subtitle', size: subtitleTextSize, weight: subtitleTextWeight, min: 8, max: 36 },
@@ -715,12 +716,12 @@ const typographyControls = [
   { label: 'Body text', size: bodyTextSize, weight: bodyTextWeight, min: 10, max: 28 },
 ]
 const typographyStyle = computed(() => ({
-  '--navigation-text-size': `${navigationTextSize.value}px`,
+  '--navigation-text-size': `${Math.max(13, navigationTextSize.value * typographyViewportScale.value)}px`,
   '--navigation-text-weight': navigationTextWeight.value,
-  '--menu-item-spacing': `${menuItemSpacing.value}px`,
-  '--heading-text-size': `${headingTextSize.value}px`,
+  '--menu-item-spacing': `${Math.max(8, menuItemSpacing.value * typographyViewportScale.value)}px`,
+  '--heading-text-size': `${Math.max(14, headingTextSize.value * typographyViewportScale.value)}px`,
   '--heading-text-weight': headingTextWeight.value,
-  '--body-text-size': `${bodyTextSize.value}px`,
+  '--body-text-size': `${Math.max(12, bodyTextSize.value * typographyViewportScale.value)}px`,
   '--body-text-weight': bodyTextWeight.value,
 }))
 watch(
@@ -979,13 +980,13 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
   ctx.textBaseline = 'alphabetic'
 
   const margin = Math.max(24, Math.min(100, targetWidth * 0.065))
-  let titleSize = titleTextSize.value
+  let titleSize = Math.max(28, titleTextSize.value * typographyViewportScale.value)
   ctx.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
   const maxTitleWidth = targetWidth - margin * 2
   const measuredWidth = ctx.measureText('Tom Eijkelenkamp').width
   if (measuredWidth > maxTitleWidth) titleSize *= maxTitleWidth / measuredWidth
 
-  const subtitleSize = subtitleTextSize.value
+  const subtitleSize = Math.max(12, subtitleTextSize.value * typographyViewportScale.value)
   const subtitleY = targetHeight - margin
   const titleY = subtitleY - subtitleSize * 1.75
 
@@ -1276,6 +1277,7 @@ function initThree() {
   const h = Math.max(1, el.clientHeight || window.innerHeight)
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
   viewportScale.value = clamp(0.25, Math.min(w / 1280, h / 800), 1)
+  typographyViewportScale.value = clamp(0.45, w / 900, 1)
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
   renderer.setPixelRatio(dpr)
@@ -1432,8 +1434,9 @@ function menuSplinePoints() {
 
   const entry = points[0].clone()
   const exit = points[points.length - 1].clone()
-  entry.x = Math.max(-bounds.x, entry.x - menuItemSpacing.value * 0.5)
-  exit.x = Math.min(bounds.x, exit.x + menuItemSpacing.value * 0.5)
+  const responsiveMenuSpacing = Math.max(8, menuItemSpacing.value * typographyViewportScale.value)
+  entry.x = Math.max(-bounds.x, entry.x - responsiveMenuSpacing * 0.5)
+  exit.x = Math.min(bounds.x, exit.x + responsiveMenuSpacing * 0.5)
   return [entry, ...points, exit]
 }
 
@@ -1444,7 +1447,8 @@ function homeTextSplinePoints() {
   const width = containerRect.width
   const height = containerRect.height
   const margin = Math.max(24, Math.min(100, width * 0.065))
-  let titleSize = titleTextSize.value
+  let titleSize = Math.max(28, titleTextSize.value * typographyViewportScale.value)
+  const subtitleSize = Math.max(12, subtitleTextSize.value * typographyViewportScale.value)
   const measureCanvas = document.createElement('canvas')
   const measureContext = measureCanvas.getContext('2d')
   measureContext.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
@@ -1454,11 +1458,11 @@ function homeTextSplinePoints() {
 
   measureContext.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
   const titleWidth = measureContext.measureText('Tom Eijkelenkamp').width
-  measureContext.font = `${subtitleTextWeight.value} ${subtitleTextSize.value}px "${appliedFont.value}", sans-serif`
+  measureContext.font = `${subtitleTextWeight.value} ${subtitleSize}px "${appliedFont.value}", sans-serif`
   const subtitleWidth = measureContext.measureText('Artist · Graphics · Algorithmic Design').width
 
   const subtitleY = height - margin
-  const titleY = subtitleY - subtitleTextSize.value * 1.75
+  const titleY = subtitleY - subtitleSize * 1.75
   const toWorld = (screenX, screenY) => new THREE.Vector2(
     screenX - bounds.x,
     bounds.y - screenY,
@@ -1470,7 +1474,7 @@ function homeTextSplinePoints() {
   ]
 
   const titleCenterY = titleY - titleSize * 0.35
-  const subtitleCenterY = subtitleY - subtitleTextSize.value * 0.35
+  const subtitleCenterY = subtitleY - subtitleSize * 0.35
   return [
     ...linePoints(margin, margin + titleWidth, titleCenterY),
     ...linePoints(margin + subtitleWidth, margin, subtitleCenterY),
@@ -1851,8 +1855,8 @@ function animate() {
       const viewWidth = bounds.x * 2
       const viewHeight = bounds.y * 2
       const margin = Math.max(24, Math.min(100, viewWidth * 0.065))
-      const titleSize = titleTextSize.value
-      const subtitleSize = subtitleTextSize.value
+      const titleSize = Math.max(28, titleTextSize.value * typographyViewportScale.value)
+      const subtitleSize = Math.max(12, subtitleTextSize.value * typographyViewportScale.value)
       const titleY = viewHeight - margin - subtitleSize * 1.75
       const lineWidth = Math.min(viewWidth - margin * 2, titleSize * 7.9)
       const triangleSize = clamp(
@@ -1980,6 +1984,7 @@ function onResize() {
 
   bounds.set(w / 2, h / 2)
   viewportScale.value = clamp(0.25, Math.min(w / 1280, h / 800), 1)
+  typographyViewportScale.value = clamp(0.45, w / 900, 1)
   splineStates.forEach(state => {
     state.size = effectiveSizeMin.value
       + (effectiveSizeMax.value - effectiveSizeMin.value) * state.seed
