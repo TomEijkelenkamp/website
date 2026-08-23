@@ -1436,13 +1436,7 @@ function menuSplinePoints() {
     )
   })
   if (!points.length) return points
-
-  const entry = points[0].clone()
-  const exit = points[points.length - 1].clone()
-  const responsiveMenuSpacing = Math.max(8, menuItemSpacing.value * typographyViewportScale.value)
-  entry.x = Math.max(-bounds.x, entry.x - responsiveMenuSpacing * 0.5)
-  exit.x = Math.min(bounds.x, exit.x + responsiveMenuSpacing * 0.5)
-  return [entry, points[0], points[points.length - 1], exit]
+  return [points[0], points[points.length - 1]]
 }
 
 function homeTextSplinePoints() {
@@ -1469,14 +1463,8 @@ function homeTextSplinePoints() {
     screenX - bounds.x,
     bounds.y - screenY,
   )
-  const linePoints = (startX, endX, screenY) => [
-    toWorld(startX, screenY),
-    toWorld((startX + endX) / 2, screenY),
-    toWorld(endX, screenY),
-  ]
-
   const titleCenterY = titleY - titleSize * 0.35
-  return linePoints(margin, margin + titleWidth, titleCenterY)
+  return [toWorld(margin + titleWidth / 2, titleCenterY)]
 }
 
 function constrainTurnRadius(points, candidate) {
