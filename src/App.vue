@@ -290,6 +290,10 @@
             Rotation lag: {{ rotationLag.toFixed(2) }}
             <input type="range" min="0.1" max="3" step="0.05" v-model.number="rotationLag" />
           </label>
+          <label>
+            Minimum turn radius: {{ minTurnRadius.toFixed(0) }} px
+            <input type="range" min="20" max="600" step="5" v-model.number="minTurnRadius" />
+          </label>
         </section>
       </div>
 
@@ -843,6 +847,7 @@ const effectivePathSpeed = computed(() => pathSpeed.value * viewportScale.value)
 const pathPointCount = ref(14)
 const pathCoverage = ref(0.98)
 const rotationLag = ref(0.65)
+const minTurnRadius = ref(370)
 const trainSpread = ref(2.01)
 
 function clamp(min, val, max) {
@@ -1437,7 +1442,7 @@ function menuSplinePoints() {
   const responsiveMenuSpacing = Math.max(8, menuItemSpacing.value * typographyViewportScale.value)
   entry.x = Math.max(-bounds.x, entry.x - responsiveMenuSpacing * 0.5)
   exit.x = Math.min(bounds.x, exit.x + responsiveMenuSpacing * 0.5)
-  return [entry, ...points, exit]
+  return [entry, points[0], points[points.length - 1], exit]
 }
 
 function homeTextSplinePoints() {
@@ -1458,9 +1463,6 @@ function homeTextSplinePoints() {
 
   measureContext.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
   const titleWidth = measureContext.measureText('Tom Eijkelenkamp').width
-  measureContext.font = `${subtitleTextWeight.value} ${subtitleSize}px "${appliedFont.value}", sans-serif`
-  const subtitleWidth = measureContext.measureText('Artist · Graphics · Algorithmic Design').width
-
   const subtitleY = height - margin
   const titleY = subtitleY - subtitleSize * 1.75
   const toWorld = (screenX, screenY) => new THREE.Vector2(
@@ -1474,37 +1476,64 @@ function homeTextSplinePoints() {
   ]
 
   const titleCenterY = titleY - titleSize * 0.35
-  const subtitleCenterY = subtitleY - subtitleSize * 0.35
-  return [
-    ...linePoints(margin, margin + titleWidth, titleCenterY),
-    ...linePoints(margin + subtitleWidth, margin, subtitleCenterY),
-  ]
+  return linePoints(margin, margin + titleWidth, titleCenterY)
 }
 
-function createNextSplinePoint() {
-  if (pendingSplinePoints.length) return pendingSplinePoints.shift()
+function constrainTurnRadius(points, candidate) {
+  if (points.length < 2) return candidate
+  const previous = points[points.length - 2]
+  const current = points[points.length - 1]
+  const incoming = current.clone().sub(previous)
+  const outgoing = candidate.clone().sub(current)
+  const outgoingLength = outgoing.length()
+  if (incoming.lengthSq() < 0.000001 || outgoingLength < 0.000001) return candidate
+
+  incoming.normalize()
+  outgoing.normalize()
+  const signedTurn = Math.atan2(
+    incoming.x * outgoing.y - incoming.y * outgoing.x,
+    incoming.dot(outgoing),
+  )
+  const radius = Math.max(1, minTurnRadius.value * viewportScale.value)
+  const maxTurn = 2 * Math.asin(clamp(0, outgoingLength / (2 * radius), 1))
+  if (Math.abs(signedTurn) <= maxTurn) return candidate
+
+  const limitedTurn = clamp(-maxTurn, signedTurn, maxTurn)
+  const cosine = Math.cos(limitedTurn)
+  const sine = Math.sin(limitedTurn)
+  const limitedDirection = new THREE.Vector2(
+    incoming.x * cosine - incoming.y * sine,
+    incoming.x * sine + incoming.y * cosine,
+  )
+  return current.clone().addScaledVector(limitedDirection, outgoingLength)
+}
+
+function createNextSplinePoint(points) {
+  if (pendingSplinePoints.length) {
+    return constrainTurnRadius(points, pendingSplinePoints.shift())
+  }
   const destination = randomQuadrantDestination()
   const candidate = destination.point
 
-  // Quadrant 1 is the top-right segment. Enter left of Research, travel
-  // across every menu label, then continue towards the sampled target.
+  // Quadrant 1 is the top-right segment. Use Research and Me as the two
+  // targets; the straight passage between them crosses the other menu labels.
   if (destination.quadrant === 1) {
     const menuPoints = menuSplinePoints()
     if (menuPoints.length) {
       pendingSplinePoints.push(...menuPoints, candidate)
-      return pendingSplinePoints.shift()
+      return constrainTurnRadius(points, pendingSplinePoints.shift())
     }
   }
-  // Quadrant 2 is bottom-left. Sweep across the title and subtitle before
-  // continuing towards the sampled destination in that segment.
+  // Quadrant 2 is bottom-left. Only the main title is part of this route; the
+  // subtitle is deliberately not a target.
   if (destination.quadrant === 2) {
     const textPoints = homeTextSplinePoints()
     if (textPoints.length) {
       pendingSplinePoints.push(...textPoints, candidate)
-      return pendingSplinePoints.shift()
+      return constrainTurnRadius(points, pendingSplinePoints.shift())
     }
   }
-  return candidate
+  return constrainTurnRadius(points, candidate)
 }
 
 function createSharedSplinePoints(pointCount = pathPointCount.value) {
@@ -1977,6 +2006,7 @@ function exportSettings() {
       lookAheadPoints: pathPointCount.value,
       screenCoverage: pathCoverage.value,
       rotationLag: rotationLag.value,
+      minTurnRadius: minTurnRadius.value,
       minSize: sizeMin.value,
       maxSize: sizeMax.value,
       trainSpread: trainSpread.value,
@@ -2039,6 +2069,9 @@ watch(sizeMax, (val) => {
   if (val < sizeMin.value) sizeMin.value = val
 })
 watch([sizeMin, sizeMax, pathPointCount], () => {
+  if (renderer && scene) buildSimulation(squareRes.value)
+})
+watch(minTurnRadius, () => {
   if (renderer && scene) buildSimulation(squareRes.value)
 })
 watch(trainSpread, () => {
