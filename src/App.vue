@@ -2,7 +2,31 @@
   <div class="app" :class="{ 'menu-mask-ready': menuMaskReady }" :style="typographyStyle">
     <div ref="container" class="canvas-container"></div>
 
-    <!-- top bar -->
+    <main class="landing-page" aria-label="Tom Eijkelenkamp portfolio">
+      <section class="landing-intro">
+        <p>My work grows from a fascination with different ways of seeing, feeling and imagining the world. Moving between dance, animation, drawing, painting, computation and design, I explore the spaces where body, nature, technology and imagination meet.</p>
+        <p>Nature and animals continually find their way into my work, alongside an interest in architecture, landscapes and the worlds we construct around ourselves. Meditation, movement and creative practice offer ways to move beyond habitual patterns of thought and discover other states of mind. I am interested in these moments of openness: places from which new images, environments and dream worlds can emerge.</p>
+      </section>
+      <section class="landing-profile" aria-labelledby="landing-name">
+        <div class="landing-portrait-stack">
+          <img class="landing-paper" src="/design/torn-paper-sheet-cream-02(1).png" alt="" aria-hidden="true" />
+          <img class="landing-portrait" src="/me/me.jpg" alt="Portrait of Tom Eijkelenkamp" />
+        </div>
+        <div class="landing-profile-copy">
+          <h1 id="landing-name">Tom Eijkelenkamp</h1>
+          <p>Artist · Graphics · Algorithmic Design</p>
+          <div class="landing-socials" aria-label="Contact and social links">
+            <a href="https://www.instagram.com/electric_graphic/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><img src="/icons/instagram.svg" alt="" /></a>
+            <a href="https://www.linkedin.com/in/tomeijkelenkamp/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><img src="/icons/linkedin.svg" alt="" /></a>
+            <a href="https://github.com/TomEijkelenkamp" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><img src="/icons/github.svg" alt="" /></a>
+            <a href="mailto:tomeijkelenkamp@hotmail.com" aria-label="Email"><img src="/icons/email.svg" alt="" /></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- top bar, aligned to the same Figma canvas as the landing content -->
+    <div class="menu-design-canvas">
     <div class="top-bar">
       <button
         data-menu="research"
@@ -49,8 +73,9 @@
         @focus="hoveredMenu = 'me'"
         @blur="hoveredMenu = null"
       >
-        Me
+        Contact
       </button>
+    </div>
     </div>
 
     <!-- overlay -->
@@ -272,27 +297,47 @@
       <div class="two-columns">
         <section>
           <label>
-            Path speed (desktop): {{ pathSpeed.toFixed(0) }}
-            <input type="range" min="10" max="160" step="1" v-model.number="pathSpeed" />
+            Orbit speed: {{ targetOrbitSpeed.toFixed(1) }}°/s
+            <input type="range" min="-90" max="90" step="0.5" v-model.number="targetOrbitSpeed" />
+          </label>
+          <label>
+            Orbit width: {{ orbitRadiusX.toFixed(2) }}
+            <input type="range" min="0.1" max="0.95" step="0.01" v-model.number="orbitRadiusX" />
+          </label>
+          <label>
+            Orbit height: {{ orbitRadiusY.toFixed(2) }}
+            <input type="range" min="0.1" max="0.95" step="0.01" v-model.number="orbitRadiusY" />
+          </label>
+          <label>
+            Target attraction: {{ targetWeight.toFixed(2) }}
+            <input type="range" min="0" max="4" step="0.05" v-model.number="targetWeight" />
+          </label>
+          <label>
+            Biography avoidance: {{ biographyAvoidanceWeight.toFixed(2) }}
+            <input type="range" min="0" max="6" step="0.05" v-model.number="biographyAvoidanceWeight" />
+          </label>
+          <label>
+            Biography clearance: {{ biographyClearance.toFixed(0) }} px
+            <input type="range" min="0" max="240" step="5" v-model.number="biographyClearance" />
           </label>
         </section>
 
         <section>
           <label>
-            Look-ahead points: {{ pathPointCount }}
-            <input type="range" min="12" max="24" step="1" v-model.number="pathPointCount" />
+            Neighbour radius: {{ neighborRadius.toFixed(0) }} px
+            <input type="range" min="30" max="600" step="5" v-model.number="neighborRadius" />
           </label>
           <label>
-            Screen coverage: {{ pathCoverage.toFixed(2) }}
-            <input type="range" min="0.35" max="1" step="0.01" v-model.number="pathCoverage" />
+            Separation: {{ separationWeight.toFixed(2) }}
+            <input type="range" min="0" max="5" step="0.05" v-model.number="separationWeight" />
           </label>
           <label>
-            Rotation lag: {{ rotationLag.toFixed(2) }}
-            <input type="range" min="0.1" max="3" step="0.05" v-model.number="rotationLag" />
+            Alignment: {{ alignmentWeight.toFixed(2) }}
+            <input type="range" min="0" max="5" step="0.05" v-model.number="alignmentWeight" />
           </label>
           <label>
-            Minimum turn radius: {{ minTurnRadius.toFixed(0) }} px
-            <input type="range" min="20" max="600" step="5" v-model.number="minTurnRadius" />
+            Cohesion: {{ cohesionWeight.toFixed(2) }}
+            <input type="range" min="0" max="5" step="0.05" v-model.number="cohesionWeight" />
           </label>
         </section>
       </div>
@@ -318,20 +363,25 @@
         </section>
 
         <section>
-          <label>
-            Train spread: {{ trainSpread.toFixed(2) }}
-            <input type="range" min="0.05" max="3" step="0.01" v-model.number="trainSpread" />
+          <label>Minimum speed: {{ flockMinSpeed.toFixed(0) }} px/s
+            <input type="range" min="10" max="300" step="5" v-model.number="flockMinSpeed" />
+          </label>
+          <label>Maximum speed: {{ flockMaxSpeed.toFixed(0) }} px/s
+            <input type="range" min="20" max="500" step="5" v-model.number="flockMaxSpeed" />
+          </label>
+          <label>Maximum steering: {{ maxSteer.toFixed(0) }} px/s²
+            <input type="range" min="10" max="600" step="5" v-model.number="maxSteer" />
           </label>
         </section>
       </div>
 
       <div class="color-picker-grid">
-        <HsvColorPicker label="Text color" v-bind="textColorA" @update="Object.assign(textColorA, $event)" />
-        <HsvColorPicker label="Text cutout color" v-bind="textColorB" @update="Object.assign(textColorB, $event)" />
+        <HsvColorPicker label="Navigation overlap" v-bind="navigationEffectColor" @update="Object.assign(navigationEffectColor, $event)" />
+        <HsvColorPicker label="Biography overlap" v-bind="biographyEffectColor" @update="Object.assign(biographyEffectColor, $event)" />
+        <HsvColorPicker label="Title overlap" v-bind="titleEffectColor" @update="Object.assign(titleEffectColor, $event)" />
+        <HsvColorPicker label="Subtitle overlap" v-bind="subtitleEffectColor" @update="Object.assign(subtitleEffectColor, $event)" />
+        <HsvColorPicker label="Social icons overlap" v-bind="socialEffectColor" @update="Object.assign(socialEffectColor, $event)" />
       </div>
-      <section>
-        <div class="gradient-bar" :style="{ background: textGradientCss }"></div>
-      </section>
       </div>
     </div>
   </div>
@@ -700,6 +750,7 @@ const headingTextWeight = ref(600)
 const bodyTextSize = ref(14)
 const bodyTextWeight = ref(400)
 const typographyViewportScale = ref(1)
+const designScale = ref(1)
 const typographyControls = [
   { label: 'Main title', size: titleTextSize, weight: titleTextWeight, min: 24, max: 96 },
   { label: 'Subtitle', size: subtitleTextSize, weight: subtitleTextWeight, min: 8, max: 36 },
@@ -708,6 +759,7 @@ const typographyControls = [
   { label: 'Body text', size: bodyTextSize, weight: bodyTextWeight, min: 10, max: 28 },
 ]
 const typographyStyle = computed(() => ({
+  '--design-scale': String(designScale.value),
   '--navigation-text-size': `${Math.max(13, navigationTextSize.value * typographyViewportScale.value)}px`,
   '--navigation-text-weight': navigationTextWeight.value,
   '--menu-item-spacing': `${Math.max(8, menuItemSpacing.value * typographyViewportScale.value)}px`,
@@ -828,17 +880,20 @@ function keepControlPanelInViewport() {
   controlPanelPosition.y = next.y
 }
 
-const squareRes = ref(3) // 3x3 = 9 triangles
+const squareRes = ref(5) // 5x5 = 25 triangles
 const animationPaused = ref(false)
 const colorLayoutMode = ref(false)
 
 const colorA = reactive({ h: 79, s: 0.98, v: 0.90 })
 const colorB = reactive({ h: 92, s: 0.15283059013444267, v: 1.00 })
-const textColorA = reactive({ h: 358, s: 1.00, v: 0.44838739210559475 })
-const textColorB = reactive({ h: 346, s: 0.5626751922315041, v: 1.00 })
+const navigationEffectColor = reactive({ h: 283, s: 0.26, v: 1.00 })
+const biographyEffectColor = reactive({ h: 283, s: 0.26, v: 1.00 })
+const titleEffectColor = reactive({ h: 283, s: 0.26, v: 1.00 })
+const subtitleEffectColor = reactive({ h: 283, s: 0.26, v: 1.00 })
+const socialEffectColor = reactive({ h: 283, s: 0.26, v: 1.00 })
 
-const sizeMin = ref(13)
-const sizeMax = ref(255)
+const sizeMin = ref(27)
+const sizeMax = ref(80)
 const viewportScale = ref(1)
 const effectiveSizeMin = computed(() => sizeMin.value * viewportScale.value)
 const effectiveSizeMax = computed(() => sizeMax.value * viewportScale.value)
@@ -849,6 +904,19 @@ const pathCoverage = ref(0.98)
 const rotationLag = ref(0.65)
 const minTurnRadius = ref(370)
 const trainSpread = ref(2.01)
+const targetOrbitSpeed = ref(12)
+const orbitRadiusX = ref(0.78)
+const orbitRadiusY = ref(0.56)
+const targetWeight = ref(0.75)
+const biographyAvoidanceWeight = ref(3.2)
+const biographyClearance = ref(70)
+const neighborRadius = ref(75)
+const separationWeight = ref(0.9)
+const alignmentWeight = ref(1.15)
+const cohesionWeight = ref(0.3)
+const flockMinSpeed = ref(55)
+const flockMaxSpeed = ref(285)
+const maxSteer = ref(150)
 
 function clamp(min, val, max) {
   return Math.min(Math.max(val, min), max)
@@ -865,18 +933,14 @@ const gradientCss = computed(() => {
   return `linear-gradient(to right, ${ca}, ${cb})`
 })
 
-const textGradientCss = computed(() => {
-  const ca = hsvToCss(textColorA.h, textColorA.s, textColorA.v)
-  const cb = hsvToCss(textColorB.h, textColorB.s, textColorB.v)
-  return `linear-gradient(to right, ${ca} 0 50%, ${cb} 50% 100%)`
-})
-
 // three.js objects
 let renderer, scene, camera
 let gpuCompute, velVar, posVar
 let renderMesh
 let splineStates = []
 let sharedSpline = null
+let flockStates = []
+let targetOrbitAngle = -Math.PI * 0.15
 let animationId = null
 let mouse = new THREE.Vector2(0, 0)
 let bounds = new THREE.Vector2(1, 1)
@@ -965,46 +1029,74 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
 
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  ctx.fillStyle = '#ffffff'
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'alphabetic'
-
-  const margin = Math.max(24, Math.min(100, targetWidth * 0.065))
-  let titleSize = Math.max(28, titleTextSize.value * typographyViewportScale.value)
-  ctx.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
-  const maxTitleWidth = targetWidth - margin * 2
-  const measuredWidth = ctx.measureText('Tom Eijkelenkamp').width
-  if (measuredWidth > maxTitleWidth) titleSize *= maxTitleWidth / measuredWidth
-
-  const subtitleSize = Math.max(12, subtitleTextSize.value * typographyViewportScale.value)
-  const subtitleY = targetHeight - margin
-  const titleY = subtitleY - subtitleSize * 1.75
-
-  ctx.font = `${titleTextWeight.value} ${titleSize}px "${appliedFont.value}", sans-serif`
-  ctx.fillText('Tom Eijkelenkamp', margin, titleY)
-  ctx.font = `${subtitleTextWeight.value} ${subtitleSize}px "${appliedFont.value}", sans-serif`
-  ctx.fillText('Artist · Graphics · Algorithmic Design', margin, subtitleY)
-
   const containerRect = container.value?.getBoundingClientRect()
   if (containerRect) {
-    document.querySelectorAll('.top-bar button[data-menu]').forEach((button) => {
-      const rect = button.getBoundingClientRect()
-      const styles = window.getComputedStyle(button)
-      const fontSize = Number.parseFloat(styles.fontSize) || 16
-      const label = button.textContent.trim()
-      const centerX = rect.left - containerRect.left + rect.width / 2
-      const centerY = rect.top - containerRect.top + rect.height / 2
+    ctx.fillStyle = '#ffffff'
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
 
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.font = `${navigationTextWeight.value} ${fontSize}px "${appliedFont.value}", sans-serif`
-      ctx.fillText(label, centerX, centerY)
+    const textElements = document.querySelectorAll([
+      '.top-bar button[data-menu]',
+      '.landing-intro p',
+      '.landing-profile-copy h1',
+      '.landing-profile-copy > p',
+    ].join(','))
 
-      const menuName = button.dataset.menu
-      if (hoveredMenu.value === menuName || activeOverlay.value === menuName) {
-        const textWidth = ctx.measureText(label).width
-        const underlineY = rect.bottom - containerRect.top - 1
-        ctx.fillRect(centerX - textWidth / 2, underlineY, textWidth, 1)
+    textElements.forEach((element) => {
+      const styles = window.getComputedStyle(element)
+      const scaledFontSize = (Number.parseFloat(styles.fontSize) || 16) * designScale.value
+      ctx.font = `${styles.fontStyle} ${styles.fontWeight} ${scaledFontSize}px ${styles.fontFamily}`
+      const maskId = element.matches('.top-bar button') ? 0.1
+        : element.matches('.landing-intro p') ? 0.3
+        : element.matches('.landing-profile-copy h1') ? 0.5
+        : 0.7
+      ctx.fillStyle = `rgb(${Math.round(maskId * 255)}, 0, 0)`
+
+      element.childNodes.forEach((node) => {
+        if (node.nodeType !== Node.TEXT_NODE || !node.textContent.trim()) return
+        const text = node.textContent
+        const wordPattern = /\S+/g
+        let match
+        while ((match = wordPattern.exec(text))) {
+          const range = document.createRange()
+          range.setStart(node, match.index)
+          range.setEnd(node, match.index + match[0].length)
+          const rect = range.getBoundingClientRect()
+          ctx.fillText(
+            match[0],
+            rect.left - containerRect.left,
+            rect.top - containerRect.top,
+          )
+        }
+      })
+
+      const menuName = element.dataset?.menu
+      if (menuName && (hoveredMenu.value === menuName || activeOverlay.value === menuName)) {
+        const rect = element.getBoundingClientRect()
+        ctx.fillRect(
+          rect.left - containerRect.left,
+          rect.bottom - containerRect.top - 1,
+          rect.width,
+          1,
+        )
+      }
+    })
+
+    document.querySelectorAll('.landing-socials a').forEach((link) => {
+      const icon = link.querySelector('img')
+      const rect = link.getBoundingClientRect()
+      if (icon?.complete && icon.naturalWidth) {
+        const iconCanvas = document.createElement('canvas')
+        iconCanvas.width = Math.max(1, Math.ceil(rect.width * dpr))
+        iconCanvas.height = Math.max(1, Math.ceil(rect.height * dpr))
+        const iconCtx = iconCanvas.getContext('2d')
+        iconCtx.drawImage(icon, 0, 0, iconCanvas.width, iconCanvas.height)
+        iconCtx.globalCompositeOperation = 'source-in'
+        iconCtx.fillStyle = 'rgb(230, 0, 0)'
+        iconCtx.fillRect(0, 0, iconCanvas.width, iconCanvas.height)
+        ctx.drawImage(iconCanvas, rect.left - containerRect.left, rect.top - containerRect.top, rect.width, rect.height)
+      } else if (icon) {
+        icon.addEventListener('load', redrawTextMask, { once: true })
       }
     })
   }
@@ -1054,9 +1146,11 @@ function createPostMaterial(simTex, textTex, screenSize) {
       uBgHSV_A:    { value: new THREE.Vector3() },
       uBgHSV_B:    { value: new THREE.Vector3() },
 
-      // text HSV A/B (h in [0,1])
-      uTextHSV_A:  { value: new THREE.Vector3() },
-      uTextHSV_B:  { value: new THREE.Vector3() },
+      uNavigationEffectHSV: { value: new THREE.Vector3() },
+      uBiographyEffectHSV: { value: new THREE.Vector3() },
+      uTitleEffectHSV: { value: new THREE.Vector3() },
+      uSubtitleEffectHSV: { value: new THREE.Vector3() },
+      uSocialEffectHSV: { value: new THREE.Vector3() },
 
       
       uTextSize: { value: new THREE.Vector2(textTex.image.width, textTex.image.height) },
@@ -1081,8 +1175,11 @@ function createPostMaterial(simTex, textTex, screenSize) {
       // NEW:
       uniform vec3 uBgHSV_A;
       uniform vec3 uBgHSV_B;
-      uniform vec3 uTextHSV_A;
-      uniform vec3 uTextHSV_B;
+      uniform vec3 uNavigationEffectHSV;
+      uniform vec3 uBiographyEffectHSV;
+      uniform vec3 uTitleEffectHSV;
+      uniform vec3 uSubtitleEffectHSV;
+      uniform vec3 uSocialEffectHSV;
 
       varying vec2 vUvScreen;
       uniform vec2 uTextSize;
@@ -1130,16 +1227,38 @@ function createPostMaterial(simTex, textTex, screenSize) {
         ));
         float coverage = smoothstep(0.012, 0.040, shapeSignal);
 
-        // Use a hard color switch for the cutout: A on paper, B wherever a
-        // triangle crosses the text. There is no A-to-B color gradient.
+        // The red mask channel identifies the text type. Normal colors and
+        // opacity are the exact Figma values; overlap colors come from the UI.
         float cutout = step(0.5, coverage);
-        vec3 textHSV = mix(uTextHSV_A, uTextHSV_B, cutout);
-
-        // 4) Convert to RGB
-        vec3 textRGB = hsv2rgb(textHSV);
+        float typeId = t.r;
+        vec3 normalRGB;
+        vec3 effectRGB;
+        float textOpacity;
+        if (typeId < 0.2) {
+          normalRGB = vec3(103.0, 0.0, 0.0) / 255.0;
+          effectRGB = hsv2rgb(uNavigationEffectHSV);
+          textOpacity = 1.0;
+        } else if (typeId < 0.4) {
+          normalRGB = vec3(0.0);
+          effectRGB = hsv2rgb(uBiographyEffectHSV);
+          textOpacity = 0.71;
+        } else if (typeId < 0.6) {
+          normalRGB = vec3(137.0, 89.0, 0.0) / 255.0;
+          effectRGB = hsv2rgb(uTitleEffectHSV);
+          textOpacity = 1.0;
+        } else if (typeId < 0.8) {
+          normalRGB = vec3(0.0);
+          effectRGB = hsv2rgb(uSubtitleEffectHSV);
+          textOpacity = 0.60;
+        } else {
+          normalRGB = vec3(92.0, 0.0, 0.0) / 255.0;
+          effectRGB = hsv2rgb(uSocialEffectHSV);
+          textOpacity = 0.72;
+        }
+        vec3 textRGB = mix(normalRGB, effectRGB, cutout);
 
         // 5) Blend text color over background using the text alpha
-        vec3 finalColor = mix(base, textRGB, t.a);
+        vec3 finalColor = mix(base, textRGB, t.a * textOpacity);
         return finalColor;
       }
 
@@ -1203,6 +1322,8 @@ function createPostMaterial(simTex, textTex, screenSize) {
 }
 
 onMounted(async () => {
+  updateDesignScale()
+
   // 1) preload images (network/cache)
   allImageUrls.value.forEach(src => {
     const img = new Image()
@@ -1224,6 +1345,10 @@ onMounted(async () => {
   
   initThree()
   buildSimulation(squareRes.value)
+  loadLeafAtlasTexture().then(texture => {
+    leafAtlasTexture = texture
+    if (renderMesh) renderMesh.material.uniforms.uLeafAtlas.value = texture
+  }).catch(error => console.error('Leaf textures could not be loaded', error))
   animate()
 })
 
@@ -1552,6 +1677,19 @@ function resetSplineProgresses() {
   })
 }
 
+function createFlockState(seed, index, count) {
+  const angle = (index / Math.max(1, count)) * Math.PI * 2 + Math.random() * 0.35
+  const spawnRadius = Math.min(bounds.x, bounds.y) * (0.18 + Math.random() * 0.18)
+  const speed = flockMinSpeed.value + Math.random() * (flockMaxSpeed.value - flockMinSpeed.value)
+  return {
+    seed,
+    size: effectiveSizeMin.value + (effectiveSizeMax.value - effectiveSizeMin.value) * seed,
+    position: new THREE.Vector2(Math.cos(angle) * spawnRadius, Math.sin(angle) * spawnRadius),
+    velocity: new THREE.Vector2(-Math.sin(angle), Math.cos(angle)).multiplyScalar(speed),
+    angle: angle - Math.PI / 2,
+  }
+}
+
 function buildSimulation(res) {
   // remove old mesh
   if (renderMesh) {
@@ -1597,6 +1735,11 @@ function buildSimulation(res) {
     0.8660254, -0.5, 0.0,
   ])
   triangle.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+  triangle.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([
+    0.5, 1.0,
+    0.0, 0.0,
+    1.0, 0.0,
+  ]), 2))
 
   const instanced = new THREE.InstancedMesh(triangle, createRenderMaterial(), count)
 
@@ -1612,18 +1755,9 @@ function buildSimulation(res) {
 
   scene.add(instanced)
   renderMesh = instanced
-  splineStates = seeds.map(createSplineState)
-  const initialSpacing = 0.52 * trainSpread.value
-  const initialProgress = Math.max(7, (splineStates.length - 1) * initialSpacing + 1)
-  const initialPointCount = Math.max(pathPointCount.value, Math.ceil(initialProgress + 8))
-  const points = createSharedSplinePoints(initialPointCount)
-  sharedSpline = {
-    points,
-    progress: Math.min(initialProgress, points.length - 5),
-    speed: effectivePathSpeed.value,
-    baseSpeed: effectivePathSpeed.value,
-  }
-  resetSplineProgresses()
+  splineStates = []
+  sharedSpline = null
+  flockStates = seeds.map((seed, index) => createFlockState(seed, index, count))
 }
 
 function fillPositionTexture(texture, bounds, seeds) {
@@ -1765,10 +1899,12 @@ function createRenderMaterial() {
       uColorA: { value: new THREE.Color() },
       uColorB: { value: new THREE.Color() },
       uColorLayout: { value: 0 },
+      uLeafAtlas: { value: leafAtlasTexture },
     },
     vertexShader: /* glsl */`
       precision highp float;
       attribute vec3 position;
+      attribute vec2 uv;
       attribute float aSeed;
       attribute mat4 instanceMatrix;
       uniform mat4 projectionMatrix;
@@ -1776,11 +1912,13 @@ function createRenderMaterial() {
       varying float vSeed;
       attribute float aPreviewSeed;
       varying float vPreviewSeed;
+      varying vec2 vUv;
 
       
       void main() {
         vSeed = aSeed;
         vPreviewSeed = aPreviewSeed;
+        vUv = uv;
         vec4 worldPosition = instanceMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * modelViewMatrix * worldPosition;
       }
@@ -1791,15 +1929,18 @@ function createRenderMaterial() {
       uniform vec3 uColorA;
       uniform vec3 uColorB;
       uniform float uColorLayout;
+      uniform sampler2D uLeafAtlas;
       varying float vSeed;
       varying float vPreviewSeed;
+      varying vec2 vUv;
 
       void main() {
-        float randomT = fract(sin(vSeed * 43758.5453123) * 43758.5453123);
-        float t = mix(randomT, vPreviewSeed, uColorLayout);
-        vec3 col = mix(uColorA, uColorB, t);
-
-        gl_FragColor = vec4(col, 1.0);
+        float leafIndex = floor(fract(vSeed * 13.731 + 0.17) * 4.0);
+        vec2 tile = vec2(mod(leafIndex, 2.0), floor(leafIndex / 2.0));
+        vec2 safeUv = mix(vec2(0.003), vec2(0.997), vUv);
+        vec2 atlasUv = (safeUv + tile) * 0.5;
+        vec3 leafColor = texture2D(uLeafAtlas, atlasUv).rgb;
+        gl_FragColor = vec4(leafColor, 1.0);
       }
     `,
     transparent: true,
@@ -1807,10 +1948,221 @@ function createRenderMaterial() {
   })
 }
 
+let leafAtlasTexture = new THREE.DataTexture(new Uint8Array([62, 143, 25, 255]), 1, 1)
+leafAtlasTexture.needsUpdate = true
+
+async function loadLeafAtlasTexture() {
+  const sources = [
+    '/design/image-from-rawpixel-id-13095024-png.png',
+    '/design/image-from-rawpixel-id-13095633-png.png',
+    '/design/image-from-rawpixel-id-13096138-png.png',
+    '/design/image-from-rawpixel-id-14061500-png.png',
+  ]
+  const images = await Promise.all(sources.map(src => new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = reject
+    image.src = src
+  })))
+  const cell = 1024
+  const atlas = document.createElement('canvas')
+  atlas.width = cell * 2
+  atlas.height = cell * 2
+  const ctx = atlas.getContext('2d')
+  images.forEach((image, index) => {
+    const x = (index % 2) * cell
+    const y = Math.floor(index / 2) * cell
+    const crop = findLargestLeafTriangleCrop(image)
+    ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, x, y, cell, cell)
+  })
+  const texture = new THREE.CanvasTexture(atlas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.minFilter = THREE.LinearMipmapLinearFilter
+  texture.magFilter = THREE.LinearFilter
+  texture.generateMipmaps = true
+  return texture
+}
+
+function findLargestLeafTriangleCrop(image) {
+  const probe = document.createElement('canvas')
+  probe.width = image.width
+  probe.height = image.height
+  const ctx = probe.getContext('2d', { willReadFrequently: true })
+  ctx.drawImage(image, 0, 0)
+  const alpha = ctx.getImageData(0, 0, image.width, image.height).data
+  const center = Math.round(image.width / 2)
+  const rowInset = Math.max(2, Math.round(image.width * 0.012))
+  const halfWidths = new Float32Array(image.height)
+
+  for (let y = 0; y < image.height; y++) {
+    let left = center
+    let right = center
+    while (left > 0 && alpha[(y * image.width + left) * 4 + 3] >= 220) left--
+    while (right < image.width - 1 && alpha[(y * image.width + right) * 4 + 3] >= 220) right++
+    halfWidths[y] = Math.max(0, Math.min(center - left, right - center) - rowInset)
+  }
+
+  const firstLeafRow = halfWidths.findIndex(width => width > rowInset)
+  let best = { score: 0, top: Math.max(0, firstLeafRow), bottom: Math.round(image.height * 0.72), width: image.width * 0.5 }
+  const topStart = Math.max(0, firstLeafRow)
+  const topEnd = Math.min(Math.round(image.height * 0.18), topStart + Math.round(image.height * 0.12))
+  const bottomStart = Math.round(image.height * 0.5)
+  const bottomEnd = Math.round(image.height * 0.82)
+
+  for (let top = topStart; top <= topEnd; top += 3) {
+    for (let bottom = bottomStart; bottom <= bottomEnd; bottom += 3) {
+      const height = bottom - top
+      if (height <= 0) continue
+      let maxCropWidth = Infinity
+      let valid = true
+      for (let y = top + 2; y <= bottom; y += 2) {
+        const t = (y - top) / height
+        if (t < 0.035) continue
+        const available = halfWidths[y]
+        if (available <= 0) { valid = false; break }
+        maxCropWidth = Math.min(maxCropWidth, (available * 2) / t)
+      }
+      if (!valid || !Number.isFinite(maxCropWidth)) continue
+      maxCropWidth = Math.min(maxCropWidth, image.width * 0.96)
+      const score = maxCropWidth * height
+      if (score > best.score) best = { score, top, bottom, width: maxCropWidth }
+    }
+  }
+
+  const safety = 0.94
+  const width = Math.max(8, best.width * safety)
+  const verticalInset = Math.max(1, (best.bottom - best.top) * 0.012)
+  return {
+    x: center - width / 2,
+    y: best.top + verticalInset,
+    width,
+    height: Math.max(8, best.bottom - best.top - verticalInset * 2),
+  }
+}
+
+function limitVector(vector, maximum) {
+  if (vector.lengthSq() > maximum * maximum) vector.setLength(maximum)
+  return vector
+}
+
+function steerToward(currentVelocity, desiredDirection, desiredSpeed, steeringLimit) {
+  if (desiredDirection.lengthSq() < 0.000001) return new THREE.Vector2()
+  return limitVector(
+    desiredDirection.clone().setLength(desiredSpeed).sub(currentVelocity),
+    steeringLimit,
+  )
+}
+
+function updateFlock(dt, matrix, position, rotation, scale, axis) {
+  targetOrbitAngle += THREE.MathUtils.degToRad(targetOrbitSpeed.value) * dt
+  const orbitTarget = new THREE.Vector2(
+    Math.cos(targetOrbitAngle) * bounds.x * orbitRadiusX.value,
+    Math.sin(targetOrbitAngle) * bounds.y * orbitRadiusY.value,
+  )
+  const neighborDistance = neighborRadius.value * viewportScale.value
+  const minSpeed = flockMinSpeed.value * viewportScale.value
+  const maxSpeed = Math.max(minSpeed, flockMaxSpeed.value * viewportScale.value)
+  const steeringLimit = maxSteer.value * viewportScale.value
+  const positions = flockStates.map(state => state.position.clone())
+  const velocities = flockStates.map(state => state.velocity.clone())
+  const containerRect = container.value?.getBoundingClientRect()
+  const biographyRect = document.querySelector('.landing-intro')?.getBoundingClientRect()
+  const biographyObstacle = containerRect && biographyRect ? {
+    center: new THREE.Vector2(
+      biographyRect.left - containerRect.left + biographyRect.width / 2 - containerRect.width / 2,
+      -(biographyRect.top - containerRect.top + biographyRect.height / 2 - containerRect.height / 2),
+    ),
+    halfWidth: biographyRect.width / 2,
+    halfHeight: biographyRect.height / 2,
+  } : null
+
+  flockStates.forEach((state, index) => {
+    const alignment = new THREE.Vector2()
+    const cohesion = new THREE.Vector2()
+    const separation = new THREE.Vector2()
+    let neighbors = 0
+
+    flockStates.forEach((_, otherIndex) => {
+      if (index === otherIndex) return
+      const offset = positions[index].clone().sub(positions[otherIndex])
+      const distance = offset.length()
+      if (distance <= 0 || distance > neighborDistance) return
+      neighbors++
+      alignment.add(velocities[otherIndex])
+      cohesion.add(positions[otherIndex])
+      const separationDistance = Math.max(
+        neighborDistance * 0.42,
+        (state.size + flockStates[otherIndex].size) * 0.72,
+      )
+      if (distance < separationDistance) {
+        const urgency = 1 - distance / separationDistance
+        separation.add(offset.normalize().multiplyScalar(urgency * urgency))
+      }
+    })
+
+    const acceleration = new THREE.Vector2()
+    if (neighbors) {
+      alignment.multiplyScalar(1 / neighbors)
+      cohesion.multiplyScalar(1 / neighbors).sub(positions[index])
+      acceleration.addScaledVector(steerToward(velocities[index], alignment, maxSpeed, steeringLimit), alignmentWeight.value)
+      acceleration.addScaledVector(steerToward(velocities[index], cohesion, maxSpeed, steeringLimit), cohesionWeight.value)
+      acceleration.addScaledVector(steerToward(velocities[index], separation, maxSpeed, steeringLimit), separationWeight.value)
+    }
+
+    const toTarget = orbitTarget.clone().sub(positions[index])
+    acceleration.addScaledVector(steerToward(velocities[index], toTarget, maxSpeed, steeringLimit), targetWeight.value)
+
+    if (biographyObstacle && biographyAvoidanceWeight.value > 0) {
+      const clearance = biographyClearance.value * viewportScale.value + state.size * 0.55
+      const halfWidth = biographyObstacle.halfWidth + clearance
+      const halfHeight = biographyObstacle.halfHeight + clearance
+      const localX = positions[index].x - biographyObstacle.center.x
+      const localY = positions[index].y - biographyObstacle.center.y
+      const remainingX = halfWidth - Math.abs(localX)
+      const remainingY = halfHeight - Math.abs(localY)
+      if (remainingX > 0 && remainingY > 0) {
+        const escape = remainingX < remainingY
+          ? new THREE.Vector2(localX < 0 ? -1 : 1, 0)
+          : new THREE.Vector2(0, localY < 0 ? -1 : 1)
+        const depth = Math.min(1, Math.min(remainingX, remainingY) / Math.max(1, clearance))
+        const avoidance = steerToward(velocities[index], escape, maxSpeed, steeringLimit)
+        acceleration.addScaledVector(avoidance, biographyAvoidanceWeight.value * (0.65 + depth))
+      }
+    }
+    limitVector(acceleration, steeringLimit)
+
+    state.velocity.addScaledVector(acceleration, dt)
+    const speed = state.velocity.length()
+    if (speed > maxSpeed) state.velocity.setLength(maxSpeed)
+    else if (speed < minSpeed && speed > 0.0001) state.velocity.setLength(minSpeed)
+    state.position.addScaledVector(state.velocity, dt)
+
+    // Wrap only after the complete largest triangle has cleared the viewport.
+    // The shared off-screen flight margin is deliberately larger than the
+    // requested half-triangle minimum, so no leaf can visibly teleport.
+    const offscreenFlightMargin = effectiveSizeMax.value
+    const edgeX = bounds.x + offscreenFlightMargin
+    const edgeY = bounds.y + offscreenFlightMargin
+    if (Math.abs(state.position.x) > edgeX) state.position.x = -Math.sign(state.position.x) * edgeX
+    if (Math.abs(state.position.y) > edgeY) state.position.y = -Math.sign(state.position.y) * edgeY
+
+    const targetAngle = Math.atan2(state.velocity.y, state.velocity.x) - Math.PI / 2
+    const angleDelta = Math.atan2(Math.sin(targetAngle - state.angle), Math.cos(targetAngle - state.angle))
+    state.angle += angleDelta * (1 - Math.exp(-6 * dt))
+
+    position.set(state.position.x, state.position.y, 0)
+    rotation.setFromAxisAngle(axis, state.angle)
+    scale.set(state.size, state.size, 1)
+    matrix.compose(position, rotation, scale)
+    renderMesh.setMatrixAt(index, matrix)
+  })
+  renderMesh.instanceMatrix.needsUpdate = true
+}
+
 function animate() {
   const dt = Math.min(clock.getDelta(), 0.05)
 
-  if (renderMesh && sharedSpline) {
+  if (renderMesh && flockStates.length) {
     const matrix = new THREE.Matrix4()
     const position = new THREE.Vector3()
     const rotation = new THREE.Quaternion()
@@ -1827,12 +2179,12 @@ function animate() {
       const lineWidth = Math.min(viewWidth - margin * 2, titleSize * 7.9)
       const triangleSize = clamp(
         22,
-        Math.min(titleSize * 1.2, (lineWidth / Math.max(1, splineStates.length - 1)) * 0.72),
+        Math.min(titleSize * 1.2, (lineWidth / Math.max(1, flockStates.length - 1)) * 0.72),
         74,
       )
 
-      splineStates.forEach((state, index) => {
-        const amount = splineStates.length === 1 ? 0.5 : index / (splineStates.length - 1)
+      flockStates.forEach((state, index) => {
+        const amount = flockStates.length === 1 ? 0.5 : index / (flockStates.length - 1)
         const screenX = margin + lineWidth * amount
         position.set(screenX - bounds.x, bounds.y - titleY, 0)
         rotation.setFromAxisAngle(axis, index % 2 === 0 ? 0 : Math.PI)
@@ -1842,57 +2194,7 @@ function animate() {
       })
       renderMesh.instanceMatrix.needsUpdate = true
     } else if (!animationPaused.value && activeOverlay.value === null) {
-      sharedSpline.baseSpeed = effectivePathSpeed.value
-      sharedSpline.speed = sharedSpline.baseSpeed
-
-      while (sharedSpline.points.length - 3 - sharedSpline.progress < 5) {
-        sharedSpline.points.push(createNextSplinePoint(sharedSpline.points))
-      }
-
-      const frameDistance = sharedSpline.speed * dt
-      splineStates.forEach((state) => {
-        state.progress = advanceSplineByDistance(
-          sharedSpline.points,
-          state.progress,
-          frameDistance,
-        )
-      })
-      sharedSpline.progress = splineStates[0]?.progress ?? sharedSpline.progress
-
-      let earliestProgress = splineStates.reduce(
-        (earliest, state) => Math.min(earliest, state.progress),
-        sharedSpline.progress,
-      )
-      while (earliestProgress > 2.5 && sharedSpline.points.length > pathPointCount.value) {
-        sharedSpline.points.shift()
-        sharedSpline.progress -= 1
-        splineStates.forEach((state) => { state.progress -= 1 })
-        earliestProgress -= 1
-      }
-
-      splineStates.forEach((state, index) => {
-        const progress = state.progress
-        const here = splinePoint(sharedSpline.points, progress)
-        const ahead = splinePoint(sharedSpline.points, progress + 0.01)
-        const tangent = ahead.clone().sub(here).normalize()
-        const response = rotationLag.value * (
-          0.7 + (1 - state.size / effectiveSizeMax.value) * 0.6
-        )
-
-        const targetAngle = Math.atan2(tangent.y, tangent.x) - Math.PI / 2
-        const angleDelta = Math.atan2(
-          Math.sin(targetAngle - state.angle),
-          Math.cos(targetAngle - state.angle)
-        )
-        state.angle += angleDelta * (1 - Math.exp(-response * dt))
-
-        position.set(here.x, here.y, 0)
-        rotation.setFromAxisAngle(axis, state.angle)
-        scale.set(state.size, state.size, 1)
-        matrix.compose(position, rotation, scale)
-        renderMesh.setMatrixAt(index, matrix)
-      })
-      renderMesh.instanceMatrix.needsUpdate = true
+      updateFlock(dt, matrix, position, rotation, scale, axis)
     }
 
     const ca = hsvToRgb(colorA.h, colorA.s, colorA.v)
@@ -1905,13 +2207,14 @@ function animate() {
   if (postMesh) {
     const bgA = new THREE.Vector3(colorA.h / 360, colorA.s, colorA.v)
     const bgB = new THREE.Vector3(colorB.h / 360, colorB.s, colorB.v)
-    const tA = new THREE.Vector3(textColorA.h / 360, textColorA.s, textColorA.v)
-    const tB = new THREE.Vector3(textColorB.h / 360, textColorB.s, textColorB.v)
 
     postMesh.material.uniforms.uBgHSV_A.value.copy(bgA)
     postMesh.material.uniforms.uBgHSV_B.value.copy(bgB)
-    postMesh.material.uniforms.uTextHSV_A.value.copy(tA)
-    postMesh.material.uniforms.uTextHSV_B.value.copy(tB)
+    postMesh.material.uniforms.uNavigationEffectHSV.value.set(navigationEffectColor.h / 360, navigationEffectColor.s, navigationEffectColor.v)
+    postMesh.material.uniforms.uBiographyEffectHSV.value.set(biographyEffectColor.h / 360, biographyEffectColor.s, biographyEffectColor.v)
+    postMesh.material.uniforms.uTitleEffectHSV.value.set(titleEffectColor.h / 360, titleEffectColor.s, titleEffectColor.v)
+    postMesh.material.uniforms.uSubtitleEffectHSV.value.set(subtitleEffectColor.h / 360, subtitleEffectColor.s, subtitleEffectColor.v)
+    postMesh.material.uniforms.uSocialEffectHSV.value.set(socialEffectColor.h / 360, socialEffectColor.s, socialEffectColor.v)
   }
 
   // PASS 1: render squares to offscreen
@@ -1919,21 +2222,17 @@ function animate() {
   renderer.clear()
   renderer.render(scene, camera)
 
-  // PASS 2: always return to the visible canvas. If the text composition is
-  // not ready yet, show the triangle scene directly instead of a blank frame.
+  // PASS 2: composite the reactive text/icon colors over the textured leaves.
   renderer.setRenderTarget(null)
   renderer.clear()
-  if (postScene) {
-    renderer.render(postScene, camera)
-  } else {
-    renderer.render(scene, camera)
-  }
+  renderer.render(postMesh && textFontReady ? postScene : scene, camera)
 
   animationId = requestAnimationFrame(animate)
 }
 
 
 function onResize() {
+  updateDesignScale()
   if (!container.value || !renderer || !camera) return
   const w = Math.max(1, container.value.clientWidth || window.innerWidth)
   const h = Math.max(1, container.value.clientHeight || window.innerHeight)
@@ -1951,18 +2250,19 @@ function onResize() {
   bounds.set(w / 2, h / 2)
   viewportScale.value = clamp(0.25, Math.min(w / 1280, h / 800), 1)
   typographyViewportScale.value = clamp(0.45, w / 900, 1)
-  splineStates.forEach(state => {
+  flockStates.forEach(state => {
     state.size = effectiveSizeMin.value
       + (effectiveSizeMax.value - effectiveSizeMin.value) * state.seed
   })
-  if (renderMesh && sharedSpline) {
-    const points = createSharedSplinePoints(sharedSpline.points.length)
-    sharedSpline.points = points
-    sharedSpline.progress = Math.min(7, points.length - 5)
-    resetSplineProgresses()
-  }
   if (textFontReady) loadSvgAsTexture(img, w, h)
   keepControlPanelInViewport()
+}
+
+function updateDesignScale() {
+  designScale.value = Math.min(
+    (window.innerWidth * 0.92) / 1440,
+    (window.innerHeight * 0.92) / 1000,
+  )
 }
 
 function onPointerMove(e) {
@@ -1990,20 +2290,30 @@ function exportSettings() {
     font: selectedFont.value,
     simulation: {
       triangleGrid: squareRes.value,
-      pathSpeed: pathSpeed.value,
-      lookAheadPoints: pathPointCount.value,
-      screenCoverage: pathCoverage.value,
-      rotationLag: rotationLag.value,
-      minTurnRadius: minTurnRadius.value,
+      targetOrbitSpeed: targetOrbitSpeed.value,
+      orbitRadiusX: orbitRadiusX.value,
+      orbitRadiusY: orbitRadiusY.value,
+      targetWeight: targetWeight.value,
+      biographyAvoidanceWeight: biographyAvoidanceWeight.value,
+      biographyClearance: biographyClearance.value,
+      neighborRadius: neighborRadius.value,
+      separationWeight: separationWeight.value,
+      alignmentWeight: alignmentWeight.value,
+      cohesionWeight: cohesionWeight.value,
+      minimumSpeed: flockMinSpeed.value,
+      maximumSpeed: flockMaxSpeed.value,
+      maximumSteering: maxSteer.value,
       minSize: sizeMin.value,
       maxSize: sizeMax.value,
-      trainSpread: trainSpread.value,
     },
     colors: {
       triangleA: { ...colorA },
       triangleB: { ...colorB },
-      textA: { ...textColorA },
-      textB: { ...textColorB },
+      navigationOverlap: { ...navigationEffectColor },
+      biographyOverlap: { ...biographyEffectColor },
+      titleOverlap: { ...titleEffectColor },
+      subtitleOverlap: { ...subtitleEffectColor },
+      socialOverlap: { ...socialEffectColor },
     },
     typography: {
       mainTitle: { size: titleTextSize.value, weight: titleTextWeight.value },
@@ -2056,14 +2366,14 @@ watch(sizeMin, (val) => {
 watch(sizeMax, (val) => {
   if (val < sizeMin.value) sizeMin.value = val
 })
-watch([sizeMin, sizeMax, pathPointCount], () => {
+watch([sizeMin, sizeMax], () => {
   if (renderer && scene) buildSimulation(squareRes.value)
 })
-watch(minTurnRadius, () => {
-  if (renderer && scene) buildSimulation(squareRes.value)
+watch(flockMinSpeed, (value) => {
+  if (value > flockMaxSpeed.value) flockMaxSpeed.value = value
 })
-watch(trainSpread, () => {
-  if (renderer && scene) buildSimulation(squareRes.value)
+watch(flockMaxSpeed, (value) => {
+  if (value < flockMinSpeed.value) flockMinSpeed.value = value
 })
 </script>
 
@@ -2942,6 +3252,38 @@ watch(trainSpread, () => {
   opacity: 0;
   pointer-events: none;
 }
+
+/* Botanical landing page */
+.canvas-container { position: fixed; inset: 0; z-index: 0; display: block; }
+.app { --design-scale: 1; width: 100vw; height: 100dvh; min-height: 0; overflow: hidden; color: #670000; background: #fbfdf9; }
+.landing-page { position: absolute; z-index: 1; top: 50%; left: 50%; width: 1440px; height: 1000px; min-height: 0; overflow: hidden; pointer-events: none; transform: translate(-50%, -50%) scale(var(--design-scale)); transform-origin: center; }
+.landing-intro { position: absolute; z-index: 2; top: 260px; left: 485px; width: 840px; height: 235px; box-sizing: border-box; color: #000; opacity: .71; font-family: "Marcellus", "Marcellus Local", serif; font-size: 18px; font-weight: 400; line-height: 22px; letter-spacing: 0; text-align: right; }
+.landing-intro p { margin: 0 0 .45em; }
+.landing-profile { position: absolute; z-index: 2; inset: 0; display: block; }
+.landing-portrait-stack { position: absolute; inset: 0; width: auto; height: auto; }
+.landing-paper { position: absolute; z-index: 0; top: 485px; left: 45px; width: 430px; height: 290px; object-fit: fill; transform: rotate(90deg); transform-origin: center; filter: drop-shadow(4px 5px 7px rgba(0,0,0,.2)); }
+.landing-portrait { position: absolute; z-index: 1; top: 468px; left: 180px; display: block; width: 165px; height: 315px; box-sizing: border-box; object-fit: fill; border: 4px solid #fff; background: transparent; box-shadow: 4px -4px 6.7px 0 rgba(0,0,0,.25); }
+.landing-profile-copy { display: contents; }
+.landing-profile-copy h1 { position: absolute; top: 580px; left: 450px; width: 495px; height: 62px; margin: 0; color: #895900; font-family: "Eagle Lake", serif; font-size: 44px; font-weight: 400; line-height: 62px; letter-spacing: 0; white-space: nowrap; }
+.landing-profile-copy > p { position: absolute; top: 650px; left: 450px; width: 390px; height: 24px; margin: 0; color: #000; opacity: .6; font-family: "Atomic Age", sans-serif; font-size: 17px; font-weight: 400; line-height: 24px; letter-spacing: 0; -webkit-text-stroke: .75px #000; white-space: nowrap; }
+.landing-socials { position: absolute; top: 760px; left: 440px; display: flex; width: 218px; height: 38px; gap: 22px; opacity: .72; pointer-events: auto; }
+.landing-socials a { display: block; flex: 0 0 38px; width: 38px; height: 38px; background-color: #5c0000; mask-position: center; mask-repeat: no-repeat; mask-size: contain; }
+.landing-socials a:nth-child(1) { mask-image: url('/icons/instagram.svg'); }
+.landing-socials a:nth-child(2) { mask-image: url('/icons/linkedin.svg'); }
+.landing-socials a:nth-child(3) { mask-image: url('/icons/github.svg'); }
+.landing-socials a:nth-child(4) { mask-image: url('/icons/email.svg'); }
+.landing-socials img { display: none; }
+.menu-design-canvas { position: fixed; z-index: 1200; top: 50%; left: 50%; width: 1440px; height: 1000px; pointer-events: none; transform: translate(-50%, -50%) scale(var(--design-scale)); transform-origin: center; }
+.top-bar { top: 57px; right: auto; left: 590px; width: 770px; height: 34px; justify-content: space-between; gap: 0; transform: none; pointer-events: none; }
+.top-bar button { width: auto; height: 34px; padding: 0; color: #670000; font-family: "Eagle Lake", serif; font-size: 28px; font-weight: 400; line-height: 34px; letter-spacing: 0; }
+.top-bar button { pointer-events: auto; }
+.app.menu-mask-ready .top-bar button,
+.app.menu-mask-ready .top-bar button:hover,
+.app.menu-mask-ready .top-bar button.active,
+.app.menu-mask-ready .landing-intro,
+.app.menu-mask-ready .landing-profile-copy h1,
+.app.menu-mask-ready .landing-profile-copy > p { color: transparent; -webkit-text-stroke-color: transparent; }
+.app.menu-mask-ready .landing-socials a { background-color: transparent; }
 
 
 </style>

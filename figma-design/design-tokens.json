@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "name": "Tom Eijkelenkamp website",
+    "capturedDesktop": "1440x1000",
+    "capturedMobile": "390x844",
+    "note": "WebGL motion and backdrop blur are preserved in pixel-perfect reference layers."
+  },
+  "colors": {
+    "ink": "#234839",
+    "inkActive": "#173B2B",
+    "canvas": "#F8FCF8",
+    "overlay": "rgba(248,252,248,0.76)",
+    "triangleLime": "#A9F20D",
+    "triangleMint": "#C6F887"
+  },
+  "typography": {
+    "primary": "Marcellus Local",
+    "fallback": "Space Grotesk",
+    "navigation": {
+      "size": 18,
+      "weight": 500,
+      "letterSpacingEm": -0.035
+    },
+    "heading": {
+      "size": 17,
+      "weight": 500,
+      "letterSpacingEm": -0.035
+    },
+    "body": {
+      "size": 14,
+      "weight": 400,
+      "lineHeight": 1.55
+    }
+  },
+  "layout": {
+    "overlayMaxWidth": 1120,
+    "overlayWidth": "88vw",
+    "desktopBreakpoint": 760,
+    "desktopResearchColumns": 2,
+    "desktopDanceColumns": 3,
+    "mobileColumns": 1
+  }
+}
