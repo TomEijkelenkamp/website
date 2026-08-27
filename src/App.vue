@@ -273,11 +273,11 @@
             <span>{{ type.label }}</span>
             <label>
               Size: {{ type.size.value }} px
-              <input type="range" :min="type.min" :max="type.max" step="1" v-model.number="type.size.value" />
+              <input type="range" :min="type.min" :max="type.max" step="1" :value="type.size.value" @input="setTypographyControl(type, 'size', $event)" />
             </label>
             <label>
               Boldness: {{ type.weight.value }}
-              <input type="range" min="300" max="700" step="100" v-model.number="type.weight.value" />
+              <input type="range" min="300" max="700" step="100" :value="type.weight.value" @input="setTypographyControl(type, 'weight', $event)" />
             </label>
             <label v-if="type.label === 'Navigation'">
               Menu spacing: {{ menuItemSpacing }} px
@@ -758,6 +758,9 @@ const typographyControls = [
   { label: 'Content titles', size: headingTextSize, weight: headingTextWeight, min: 10, max: 40 },
   { label: 'Body text', size: bodyTextSize, weight: bodyTextWeight, min: 10, max: 28 },
 ]
+function setTypographyControl(type, property, event) {
+  type[property].value = Number(event.target.value)
+}
 const typographyStyle = computed(() => ({
   '--design-scale': String(designScale.value),
   '--navigation-text-size': `${Math.max(13, navigationTextSize.value * typographyViewportScale.value)}px`,
@@ -908,8 +911,8 @@ const targetOrbitSpeed = ref(12)
 const orbitRadiusX = ref(0.78)
 const orbitRadiusY = ref(0.56)
 const targetWeight = ref(0.75)
-const biographyAvoidanceWeight = ref(3.2)
-const biographyClearance = ref(70)
+const biographyAvoidanceWeight = ref(4)
+const biographyClearance = ref(200)
 const neighborRadius = ref(75)
 const separationWeight = ref(0.9)
 const alignmentWeight = ref(1.15)
@@ -1044,7 +1047,10 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
 
     textElements.forEach((element) => {
       const styles = window.getComputedStyle(element)
-      const scaledFontSize = (Number.parseFloat(styles.fontSize) || 16) * designScale.value
+      const renderedScale = element.offsetHeight
+        ? element.getBoundingClientRect().height / element.offsetHeight
+        : designScale.value
+      const scaledFontSize = (Number.parseFloat(styles.fontSize) || 16) * renderedScale
       ctx.font = `${styles.fontStyle} ${styles.fontWeight} ${scaledFontSize}px ${styles.fontFamily}`
       const maskId = element.matches('.top-bar button') ? 0.1
         : element.matches('.landing-intro p') ? 0.3
@@ -1433,8 +1439,6 @@ function initThree() {
   resizeObserver.observe(el)
   window.addEventListener('pointermove', onPointerMove)
   window.addEventListener('keydown', onKeyDown)
-  window.addEventListener('pointerdown', () => { mouseEnabled.value = true })
-  window.addEventListener('pointerup', () => { mouseEnabled.value = false })
 }
 
 function handleVisibilityChange() {
@@ -3284,6 +3288,124 @@ watch(flockMaxSpeed, (value) => {
 .app.menu-mask-ready .landing-profile-copy h1,
 .app.menu-mask-ready .landing-profile-copy > p { color: transparent; -webkit-text-stroke-color: transparent; }
 .app.menu-mask-ready .landing-socials a { background-color: transparent; }
+
+@media (max-width: 767px) {
+  .app {
+    --mobile-safe-height: 100vh;
+  }
+
+  @supports (height: 100svh) {
+    .app { --mobile-safe-height: 100svh; }
+  }
+
+  .landing-page {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: var(--mobile-safe-height);
+    transform: none;
+    transform-origin: top left;
+  }
+
+  .menu-design-canvas {
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: var(--mobile-safe-height);
+    transform: none;
+    transform-origin: top left;
+  }
+
+  .top-bar {
+    position: fixed;
+    top: max(12px, calc(env(safe-area-inset-top) + 8px));
+    right: max(14px, calc(env(safe-area-inset-right) + 10px));
+    left: auto;
+    width: auto;
+    height: 34px;
+    gap: clamp(10px, 3.3vw, 18px);
+    justify-content: flex-end;
+  }
+
+  .top-bar button {
+    height: 34px;
+    font-size: clamp(11px, 3.2vw, 14px);
+    line-height: 34px;
+  }
+
+  .landing-intro {
+    top: 28.5%;
+    left: 36.5%;
+    width: 56.5%;
+    height: auto;
+    font-size: clamp(7px, 1.9vw, 9px);
+    line-height: 1.22;
+  }
+
+  .landing-paper {
+    /* Frame 6: 1.3x the former mobile paper. The source keeps its natural
+       10:7 ratio; after the 90deg rotation its visible box is 26.67 x 38.1vw. */
+    top: calc(64.6% + 5.715vw);
+    left: 1.85vw;
+    width: 38.1vw;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(.41vw .515vw .45vw rgba(0,0,0,.2));
+  }
+
+  .landing-portrait {
+    top: calc(64.6% + 5.59vw);
+    left: 14.235vw;
+    width: 14.3vw;
+    height: auto;
+    aspect-ratio: auto;
+    object-fit: contain;
+    border-width: clamp(1px, .7vw, 3px);
+    box-shadow: .41vw -.41vw .43vw 0 rgba(0,0,0,.25);
+  }
+
+  .landing-profile-copy h1 {
+    top: 70.7%;
+    left: 37.5%;
+    width: auto;
+    height: auto;
+    font-size: clamp(17px, 5vw, 24px);
+    line-height: 1.2;
+  }
+
+  .landing-profile-copy > p {
+    top: 75%;
+    left: 37.5%;
+    width: auto;
+    height: auto;
+    font-size: clamp(6px, 1.7vw, 8px);
+    line-height: 1.25;
+    -webkit-text-stroke-width: .25px;
+  }
+
+  .landing-socials {
+    top: 79.2%;
+    left: 36.8%;
+    width: auto;
+    height: auto;
+    gap: clamp(8px, 2.7vw, 13px);
+  }
+
+  .landing-socials a {
+    flex-basis: clamp(13px, 4vw, 19px);
+    width: clamp(13px, 4vw, 19px);
+    height: clamp(13px, 4vw, 19px);
+  }
+}
+
+@media (max-width: 767px) and (max-height: 560px) {
+  .landing-intro { top: 24%; }
+  .landing-paper { top: calc(61.3% + 5.715vw); }
+  .landing-portrait { top: calc(61.3% + 5.59vw); }
+  .landing-profile-copy h1 { top: 68%; }
+  .landing-profile-copy > p { top: 73%; }
+  .landing-socials { top: 78%; }
+}
 
 
 </style>
