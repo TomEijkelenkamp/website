@@ -3266,7 +3266,7 @@ watch(flockMaxSpeed, (value) => {
 .landing-profile { position: absolute; z-index: 2; inset: 0; display: block; }
 .landing-portrait-stack { position: absolute; inset: 0; width: auto; height: auto; }
 .landing-paper { position: absolute; z-index: 0; top: 485px; left: 45px; width: 430px; height: 290px; object-fit: fill; transform: rotate(90deg); transform-origin: center; filter: drop-shadow(4px 5px 7px rgba(0,0,0,.2)); }
-.landing-portrait { position: absolute; z-index: 1; top: 468px; left: 180px; display: block; width: 165px; height: 315px; box-sizing: border-box; object-fit: fill; border: 4px solid #fff; background: transparent; box-shadow: 4px -4px 6.7px 0 rgba(0,0,0,.25); }
+.landing-portrait { position: absolute; z-index: 1; top: 472.5px; left: 177.5px; display: block; width: 165px; height: 315px; box-sizing: border-box; object-fit: fill; border: 4px solid #fff; background: transparent; box-shadow: 4px -4px 6.7px 0 rgba(0,0,0,.25); }
 .landing-profile-copy { display: contents; }
 .landing-profile-copy h1 { position: absolute; top: 580px; left: 450px; width: 495px; height: 62px; margin: 0; color: #895900; font-family: "Eagle Lake", serif; font-size: 44px; font-weight: 400; line-height: 62px; letter-spacing: 0; white-space: nowrap; }
 .landing-profile-copy > p { position: absolute; top: 650px; left: 450px; width: 390px; height: 24px; margin: 0; color: #000; opacity: .6; font-family: "Atomic Age", sans-serif; font-size: 17px; font-weight: 400; line-height: 24px; letter-spacing: 0; -webkit-text-stroke: .75px #000; white-space: nowrap; }

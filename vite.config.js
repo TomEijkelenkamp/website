@@ -17,9 +17,9 @@ export default defineConfig({
   },
   server: {
     watch: {
-      // These files are immutable runtime assets. Ignoring them prevents
-      // OneDrive's sync lock from crashing Vite with EBUSY on Windows.
-      ignored: ['**/public/fonts/**'],
+      // OneDrive created this obsolete nested folder as a reparse point.
+      // Ignore only that folder; root-level font additions must reach Vite.
+      ignored: ['**/public/fonts/google/**'],
     },
   },
 })
