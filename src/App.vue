@@ -287,6 +287,26 @@
         </div>
       </section>
 
+      <section class="desktop-layout-settings">
+        <strong>Desktop landing layout</strong>
+        <label>
+          Menu horizontal: {{ desktopMenuLeft }} px
+          <input type="range" min="400" max="850" step="1" v-model.number="desktopMenuLeft" />
+        </label>
+        <label>
+          Menu vertical: {{ desktopMenuTop }} px
+          <input type="range" min="0" max="120" step="1" v-model.number="desktopMenuTop" />
+        </label>
+        <label>
+          Front page horizontal: {{ desktopLandingOffsetX }} px
+          <input type="range" :min="desktopLayoutLimits.minX" :max="desktopLayoutLimits.maxX" step="1" v-model.number="desktopLandingOffsetX" />
+        </label>
+        <label>
+          Front page vertical: {{ desktopLandingOffsetY }} px
+          <input type="range" :min="desktopLayoutLimits.minY" :max="desktopLayoutLimits.maxY" step="1" v-model.number="desktopLandingOffsetY" />
+        </label>
+      </section>
+
       <section>
         <label>
           Triangle count: {{ squareRes }} × {{ squareRes }} ({{ squareRes * squareRes }} triangles)
@@ -745,12 +765,34 @@ const subtitleTextWeight = ref(600)
 const navigationTextSize = ref(21)
 const navigationTextWeight = ref(700)
 const menuItemSpacing = ref(30)
-const headingTextSize = ref(21)
-const headingTextWeight = ref(600)
+const headingTextSize = ref(18)
+const headingTextWeight = ref(500)
 const bodyTextSize = ref(14)
 const bodyTextWeight = ref(400)
 const typographyViewportScale = ref(1)
 const designScale = ref(1)
+const layoutViewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
+const layoutViewportHeight = ref(typeof window === 'undefined' ? 1000 : window.innerHeight)
+const desktopMenuLeft = ref(850)
+const desktopMenuTop = ref(6)
+const desktopLandingOffsetX = ref(-178)
+const desktopLandingOffsetY = ref(30)
+const desktopLayoutLimits = computed(() => {
+  const scale = Math.max(0.001, designScale.value)
+  const viewportLeft = 720 - layoutViewportWidth.value / (2 * scale)
+  const viewportRight = 720 + layoutViewportWidth.value / (2 * scale)
+  const viewportTop = 500 - layoutViewportHeight.value / (2 * scale)
+  const viewportBottom = 500 + layoutViewportHeight.value / (2 * scale)
+
+  // Bounds of biography, paper, portrait, title, subtitle and socials in the
+  // 1440 × 1000 desktop design before the user-controlled translation.
+  return {
+    minX: Math.ceil(viewportLeft - 115),
+    maxX: Math.floor(viewportRight - 1325),
+    minY: Math.ceil(viewportTop - 260),
+    maxY: Math.floor(viewportBottom - 845),
+  }
+})
 const typographyControls = [
   { label: 'Main title', size: titleTextSize, weight: titleTextWeight, min: 24, max: 96 },
   { label: 'Subtitle', size: subtitleTextSize, weight: subtitleTextWeight, min: 8, max: 36 },
@@ -763,6 +805,10 @@ function setTypographyControl(type, property, event) {
 }
 const typographyStyle = computed(() => ({
   '--design-scale': String(designScale.value),
+  '--desktop-menu-left': `${desktopMenuLeft.value}px`,
+  '--desktop-menu-top': `${desktopMenuTop.value}px`,
+  '--desktop-landing-offset-x': `${desktopLandingOffsetX.value}px`,
+  '--desktop-landing-offset-y': `${desktopLandingOffsetY.value}px`,
   '--navigation-text-size': `${Math.max(13, navigationTextSize.value * typographyViewportScale.value)}px`,
   '--navigation-text-weight': navigationTextWeight.value,
   '--menu-item-spacing': `${Math.max(8, menuItemSpacing.value * typographyViewportScale.value)}px`,
@@ -780,6 +826,10 @@ watch(
     navigationTextSize,
     navigationTextWeight,
     menuItemSpacing,
+    desktopMenuLeft,
+    desktopMenuTop,
+    desktopLandingOffsetX,
+    desktopLandingOffsetY,
   ],
   redrawTextMask,
 )
@@ -1079,9 +1129,23 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
       const menuName = element.dataset?.menu
       if (menuName && (hoveredMenu.value === menuName || activeOverlay.value === menuName)) {
         const rect = element.getBoundingClientRect()
+        let underlineY = rect.bottom - containerRect.top - 1
+
+        if (window.innerWidth <= 767) {
+          const textNode = Array.from(element.childNodes).find(
+            node => node.nodeType === Node.TEXT_NODE && node.textContent.trim(),
+          )
+          if (textNode) {
+            const textRange = document.createRange()
+            textRange.selectNodeContents(textNode)
+            const textRect = textRange.getBoundingClientRect()
+            underlineY = textRect.bottom - containerRect.top + 1
+          }
+        }
+
         ctx.fillRect(
           rect.left - containerRect.left,
-          rect.bottom - containerRect.top - 1,
+          underlineY,
           rect.width,
           1,
         )
@@ -2263,10 +2327,16 @@ function onResize() {
 }
 
 function updateDesignScale() {
+  layoutViewportWidth.value = window.innerWidth
+  layoutViewportHeight.value = window.innerHeight
   designScale.value = Math.min(
     (window.innerWidth * 0.92) / 1440,
     (window.innerHeight * 0.92) / 1000,
   )
+
+  const limits = desktopLayoutLimits.value
+  desktopLandingOffsetX.value = clamp(limits.minX, desktopLandingOffsetX.value, limits.maxX)
+  desktopLandingOffsetY.value = clamp(limits.minY, desktopLandingOffsetY.value, limits.maxY)
 }
 
 function onPointerMove(e) {
@@ -2329,6 +2399,12 @@ function exportSettings() {
       },
       contentTitles: { size: headingTextSize.value, weight: headingTextWeight.value },
       bodyText: { size: bodyTextSize.value, weight: bodyTextWeight.value },
+    },
+    desktopLandingLayout: {
+      menuLeft: desktopMenuLeft.value,
+      menuTop: desktopMenuTop.value,
+      contentOffsetX: desktopLandingOffsetX.value,
+      contentOffsetY: desktopLandingOffsetY.value,
     },
   }
   const blob = new Blob([`${JSON.stringify(settings, null, 2)}\n`], { type: 'application/json' })
@@ -2948,9 +3024,12 @@ watch(flockMaxSpeed, (value) => {
 
 .overlay-content h2,
 .overlay-content h3 {
+  color: #234839;
+  font-family: "Atomic Age", sans-serif;
   font-size: var(--heading-text-size, 17px);
   font-weight: var(--heading-text-weight, 500);
-  letter-spacing: -0.035em;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
 }
 
 .overlay-header {
@@ -2972,8 +3051,11 @@ watch(flockMaxSpeed, (value) => {
 .overlay-body {
   overflow-y: auto;
   max-height: 60vh;
+  color: rgba(35, 72, 57, 0.82);
+  font-family: "Marcellus Local", "Marcellus", serif;
   font-size: var(--body-text-size, 14px);
   font-weight: var(--body-text-weight, 400);
+  line-height: 1.55;
 }
 
 /* Balanced portfolio layouts */
@@ -3025,10 +3107,12 @@ watch(flockMaxSpeed, (value) => {
 }
 
 .research-text p {
+  color: rgba(35, 72, 57, 0.82);
+  font-family: "Marcellus Local", "Marcellus", serif;
   font-size: var(--body-text-size, 14px);
   font-weight: var(--body-text-weight, 400);
   line-height: 1.55;
-  opacity: 0.78;
+  opacity: 1;
 }
 
 .research-item.no-image {
@@ -3278,7 +3362,7 @@ watch(flockMaxSpeed, (value) => {
 .landing-socials a:nth-child(4) { mask-image: url('/icons/email.svg'); }
 .landing-socials img { display: none; }
 .menu-design-canvas { position: fixed; z-index: 1200; top: 50%; left: 50%; width: 1440px; height: 1000px; pointer-events: none; transform: translate(-50%, -50%) scale(var(--design-scale)); transform-origin: center; }
-.top-bar { top: 57px; right: auto; left: 590px; width: 770px; height: 34px; justify-content: space-between; gap: 0; transform: none; pointer-events: none; }
+.top-bar { top: var(--desktop-menu-top, 6px); right: auto; left: var(--desktop-menu-left, 850px); width: 770px; height: 34px; justify-content: space-between; gap: 0; transform: none; pointer-events: none; }
 .top-bar button { width: auto; height: 34px; padding: 0; color: #670000; font-family: "Eagle Lake", serif; font-size: 28px; font-weight: 400; line-height: 34px; letter-spacing: 0; }
 .top-bar button { pointer-events: auto; }
 .app.menu-mask-ready .top-bar button,
@@ -3288,6 +3372,20 @@ watch(flockMaxSpeed, (value) => {
 .app.menu-mask-ready .landing-profile-copy h1,
 .app.menu-mask-ready .landing-profile-copy > p { color: transparent; -webkit-text-stroke-color: transparent; }
 .app.menu-mask-ready .landing-socials a { background-color: transparent; }
+
+@media (min-width: 768px) {
+  .landing-page {
+    overflow: visible;
+  }
+
+  .landing-intro,
+  .landing-profile {
+    transform: translate(
+      var(--desktop-landing-offset-x, -178px),
+      var(--desktop-landing-offset-y, 30px)
+    );
+  }
+}
 
 @media (max-width: 767px) {
   .app {
@@ -3331,6 +3429,7 @@ watch(flockMaxSpeed, (value) => {
     height: 34px;
     font-size: clamp(11px, 3.2vw, 14px);
     line-height: 34px;
+    border-bottom-color: transparent;
   }
 
   .landing-intro {
