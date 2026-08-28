@@ -188,26 +188,26 @@
           </div>
 
 
-          <div v-show="activeOverlay === 'me'" class="me-text">
-            <div class="me-image-wrapper">
-              <img src="/me/me.jpg" alt="Me"/>
+          <section v-show="activeOverlay === 'me'" class="contact-panel" aria-labelledby="contact-heading">
+            <div class="contact-intro">
+              <p class="contact-kicker">Get in touch</p>
+              <h2 id="contact-heading">Let’s create something together.</h2>
+              <p>Have a project, collaboration or question in mind? Send me a message and I’ll get back to you.</p>
             </div>
-            <!-- <p>© 2025 Tom Eijkelenkamp</p> -->
-            <div class="social-buttons">
-              <a href="https://www.linkedin.com/in/tomeijkelenkamp/" target="_blank" aria-label="LinkedIn">
-                <img src="/icons/linkedin.svg" alt="LinkedIn" class="icon">
-              </a>
-              <a href="https://github.com/TomEijkelenkamp" target="_blank" aria-label="GitHub">
-                <img src="/icons/github.svg" alt="GitHub" class="icon">
-              </a>
-              <a href="https://www.instagram.com/electric_graphic/" target="_blank" aria-label="Instagram">
-                <img src="/icons/instagram.svg" alt="Instagram" class="icon">
-              </a>
-              <a href="mailto:tomeijkelenkamp@hotmail.com" aria-label="Email">
-                <img src="/icons/email.svg" alt="Email" class="icon">
-              </a>
-            </div>
-          </div>
+            <form class="contact-form" @submit.prevent="submitContactForm" novalidate>
+              <div class="contact-field-row">
+                <label><span>Name</span><input v-model.trim="contactForm.name" name="name" type="text" autocomplete="name" required /></label>
+                <label><span>Email</span><input v-model.trim="contactForm.email" name="email" type="email" autocomplete="email" required /></label>
+              </div>
+              <label><span>Subject</span><input v-model.trim="contactForm.subject" name="subject" type="text" required /></label>
+              <label><span>Message</span><textarea v-model.trim="contactForm.message" name="message" rows="4" required></textarea></label>
+              <label class="contact-honeypot" aria-hidden="true"><span>Website</span><input v-model="contactForm.website" name="website" type="text" tabindex="-1" autocomplete="off" /></label>
+              <div class="contact-form-footer">
+                <button type="submit" :disabled="contactStatus === 'sending'">{{ contactStatus === 'sending' ? 'Sending…' : 'Send message' }}</button>
+                <p v-if="contactFeedback" class="contact-feedback" :class="`is-${contactStatus}`" role="status" aria-live="polite">{{ contactFeedback }}</p>
+              </div>
+            </form>
+          </section>
         </div>
 
 
@@ -414,6 +414,46 @@ import HsvColorPicker from './components/HsvColorPicker.vue'
 const activeOverlay = ref(null) // 'research' | 'animation' | 'dance' | 'me' | null
 const hoveredMenu = ref(null)
 const menuMaskReady = ref(false)
+
+const contactForm = reactive({ name: '', email: '', subject: '', message: '', website: '' })
+const contactStatus = ref('idle')
+const contactFeedback = ref('')
+const contactEndpoint = import.meta.env.VITE_CONTACT_FORM_ENDPOINT
+
+async function submitContactForm() {
+  contactFeedback.value = ''
+  if (!contactForm.name || !contactForm.email || !contactForm.subject || !contactForm.message) {
+    contactStatus.value = 'error'
+    contactFeedback.value = 'Please complete all fields.'
+    return
+  }
+  if (!/^\S+@\S+\.\S+$/.test(contactForm.email)) {
+    contactStatus.value = 'error'
+    contactFeedback.value = 'Please enter a valid email address.'
+    return
+  }
+  if (!contactEndpoint) {
+    contactStatus.value = 'error'
+    contactFeedback.value = 'The form is not connected yet. Please email me directly.'
+    return
+  }
+  contactStatus.value = 'sending'
+  try {
+    const response = await fetch(contactEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...contactForm }),
+    })
+    if (!response.ok) throw new Error(`Contact request failed with ${response.status}`)
+    Object.assign(contactForm, { name: '', email: '', subject: '', message: '', website: '' })
+    contactStatus.value = 'success'
+    contactFeedback.value = 'Thank you — your message has been sent.'
+  } catch (error) {
+    console.error(error)
+    contactStatus.value = 'error'
+    contactFeedback.value = 'Something went wrong. Please try again or email me directly.'
+  }
+}
 
 // NEW: flag to hide overlay while we prewarm
 const isPrewarming = ref(true)
@@ -3285,6 +3325,27 @@ watch(flockMaxSpeed, (value) => {
   object-fit: contain;
 }
 
+.contact-panel { display: grid; grid-template-columns: minmax(220px, .75fr) minmax(360px, 1.25fr); gap: clamp(2rem, 6vw, 5rem); width: min(100%, 900px); margin: 0 auto; align-items: start; }
+.contact-intro { padding-top: .2rem; }
+.contact-intro .contact-kicker { margin: 0 0 .45rem; font-family: "Atomic Age", sans-serif; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; opacity: .65; }
+.contact-intro h2 { max-width: 12em; margin: 0 0 .75rem; font-size: clamp(1.45rem, 3vw, 2.3rem); line-height: 1.12; }
+.contact-intro > p:not(.contact-kicker) { max-width: 30em; margin: 0; }
+.contact-form { display: grid; gap: .72rem; }
+.contact-field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.contact-form label { display: grid; gap: .28rem; }
+.contact-form label > span { font-family: "Atomic Age", sans-serif; font-size: .72rem; letter-spacing: .035em; }
+.contact-form input, .contact-form textarea { width: 100%; box-sizing: border-box; border: 1px solid rgba(35,72,57,.28); border-radius: 0; padding: .6rem .75rem; color: #234839; background: rgba(255,255,255,.4); font: inherit; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+.contact-form textarea { min-height: 6.5rem; resize: vertical; }
+.contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: #234839; background: rgba(255,255,255,.72); box-shadow: 0 0 0 2px rgba(35,72,57,.08); }
+.contact-honeypot { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
+.contact-form-footer { display: flex; align-items: center; gap: 1rem; min-height: 2.5rem; }
+.contact-form button { flex: 0 0 auto; min-width: 9rem; padding: .62rem 1.2rem; border: 1px solid #234839; color: #fff; background: #234839; font: inherit; cursor: pointer; transition: color .18s ease, background .18s ease, opacity .18s ease; }
+.contact-form button:hover:not(:disabled) { color: #234839; background: transparent; }
+.contact-form button:disabled { cursor: wait; opacity: .6; }
+.contact-feedback { margin: 0; font-size: .82rem; line-height: 1.35; }
+.contact-feedback.is-success { color: #23663a; }
+.contact-feedback.is-error { color: #8a2525; }
+
 @media (max-width: 760px) {
   .overlay {
     align-items: center;
@@ -3334,6 +3395,11 @@ watch(flockMaxSpeed, (value) => {
     width: 27px;
     height: 27px;
   }
+
+  .contact-panel { grid-template-columns: 1fr; gap: 1.5rem; padding: .75rem .35rem 1.5rem; }
+  .contact-intro h2 { margin-bottom: .65rem; }
+  .contact-field-row { grid-template-columns: 1fr; }
+  .contact-form-footer { align-items: flex-start; flex-direction: column; }
 }
 
 .overlay.prewarm {

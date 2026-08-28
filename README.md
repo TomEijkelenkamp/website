@@ -27,3 +27,15 @@ npm run dev
 ```sh
 npm run build
 ```
+
+## Contact form on AWS Amplify
+
+The contact form sends a JSON `POST` request to the URL in
+`VITE_CONTACT_FORM_ENDPOINT`. Add this variable in **Amplify → Hosting →
+Environment variables**, then redeploy the site.
+
+The endpoint should accept `name`, `email`, `subject`, `message`, and `website`
+as JSON fields. For AWS, connect an API Gateway `POST` route to a Lambda function
+that sends the message through Amazon SES. Allow the deployed website domain in
+the endpoint's CORS configuration. The hidden `website` value is a honeypot:
+silently discard the request when it is not empty.
