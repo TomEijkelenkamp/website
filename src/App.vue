@@ -3033,7 +3033,7 @@ watch(flockMaxSpeed, (value) => {
 
 .overlay {
   position: fixed;
-  inset: calc(var(--navigation-text-size, 18px) + 2rem) 0 0;
+  inset: calc(var(--navigation-text-size, 18px) + 2.75rem) 0 0;
   background: rgba(248, 252, 248, 0.76);
   backdrop-filter: blur(32px);
   display: flex;
@@ -3348,6 +3348,7 @@ watch(flockMaxSpeed, (value) => {
 
 @media (max-width: 760px) {
   .overlay {
+    inset: calc(var(--navigation-text-size, 18px) + 2rem) 0 0;
     align-items: center;
   }
 
