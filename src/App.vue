@@ -81,7 +81,7 @@
     <!-- overlay -->
     <div v-show="activeOverlay" class="overlay" :class="{ prewarm: isPrewarming }">
       <div class="overlay-content">
-        <div class="overlay-body">
+        <div class="overlay-body" @scroll="updateTabPaperScroll">
           <!-- Research tab -->
           <div v-show="activeOverlay === 'research'" class="research-list">
             <article
@@ -266,6 +266,20 @@
         <p>{{ activeFont.description }}<span v-if="fontLoading"> · Loading…</span></p>
       </section>
 
+      <section class="tab-panel-settings">
+        <strong>Tab panels</strong>
+        <label>
+          Paper opacity: {{ Math.round(tabPaperOpacity * 100) }}%
+          <input type="range" min="0" max="1" step="0.01" v-model.number="tabPaperOpacity" />
+        </label>
+        <HsvColorPicker label="Paper tint" v-bind="tabPaperTint" @update="Object.assign(tabPaperTint, $event)" />
+      </section>
+
+      <section class="front-page-paper-settings">
+        <strong>Front page</strong>
+        <HsvColorPicker label="Paper tint" v-bind="frontPagePaperTint" @update="Object.assign(frontPagePaperTint, $event)" />
+      </section>
+
       <section class="typography-settings">
         <strong>Typography</strong>
         <div class="two-columns">
@@ -414,6 +428,11 @@ import HsvColorPicker from './components/HsvColorPicker.vue'
 const activeOverlay = ref(null) // 'research' | 'animation' | 'dance' | 'me' | null
 const hoveredMenu = ref(null)
 const menuMaskReady = ref(false)
+const tabPaperScrollY = ref(0)
+
+function updateTabPaperScroll(event) {
+  tabPaperScrollY.value = event.currentTarget.scrollTop
+}
 
 const contactForm = reactive({ name: '', email: '', subject: '', message: '', website: '' })
 const contactStatus = ref('idle')
@@ -809,6 +828,9 @@ const headingTextSize = ref(18)
 const headingTextWeight = ref(500)
 const bodyTextSize = ref(14)
 const bodyTextWeight = ref(400)
+const tabPaperOpacity = ref(0.98)
+const tabPaperTint = reactive({ h: 45, s: 0.073059, v: 0.858824 })
+const frontPagePaperTint = reactive({ h: 49.655, s: 0.113725, v: 1 })
 const typographyViewportScale = ref(1)
 const designScale = ref(1)
 const layoutViewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
@@ -856,6 +878,10 @@ const typographyStyle = computed(() => ({
   '--heading-text-weight': headingTextWeight.value,
   '--body-text-size': `${Math.max(12, bodyTextSize.value * typographyViewportScale.value)}px`,
   '--body-text-weight': bodyTextWeight.value,
+  '--tab-paper-opacity': tabPaperOpacity.value,
+  '--tab-paper-tint': hsvToCss(tabPaperTint.h, tabPaperTint.s, tabPaperTint.v),
+  '--tab-paper-scroll-y': `${-tabPaperScrollY.value}px`,
+  '--front-page-paper-tint': hsvToCss(frontPagePaperTint.h, frontPagePaperTint.s, frontPagePaperTint.v),
 }))
 watch(
   [
@@ -2402,6 +2428,13 @@ function exportSettings() {
   const settings = {
     version: 1,
     font: selectedFont.value,
+    tabPanels: {
+      paperOpacity: tabPaperOpacity.value,
+      paperTint: { ...tabPaperTint },
+    },
+    frontPage: {
+      paperTint: { ...frontPagePaperTint },
+    },
     simulation: {
       triangleGrid: squareRes.value,
       targetOrbitSpeed: targetOrbitSpeed.value,
@@ -3034,8 +3067,8 @@ watch(flockMaxSpeed, (value) => {
 .overlay {
   position: fixed;
   inset: calc(var(--navigation-text-size, 18px) + 2.75rem) 0 0;
-  background: rgba(248, 252, 248, 0.76);
-  backdrop-filter: blur(32px);
+  isolation: isolate;
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -3044,12 +3077,30 @@ watch(flockMaxSpeed, (value) => {
   transition: opacity 0.2s ease;
 }
 
+.overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--tab-paper-tint, #fff);
+  background-image: url('/paper-texture-white.png');
+  background-position: center var(--tab-paper-scroll-y, 0px);
+  background-size: cover;
+  background-repeat: repeat-y;
+  background-blend-mode: multiply;
+  opacity: var(--tab-paper-opacity, 0.98);
+  filter: contrast(1.65) brightness(0.985);
+  pointer-events: none;
+}
+
 .overlay[style*="display: none"] {
   opacity: 0;
 }
 
 
 .overlay-content {
+  position: relative;
+  z-index: 1;
   width: min(90vw, 1200px);
   max-height: 80vh;
   /* background: rgba(14, 16, 19, 0.2); */
@@ -3410,6 +3461,7 @@ watch(flockMaxSpeed, (value) => {
 
 /* Botanical landing page */
 .canvas-container { position: fixed; inset: 0; z-index: 0; display: block; }
+.canvas-container::after { content: ''; position: absolute; inset: 0; z-index: 1; background-color: var(--front-page-paper-tint, #fff); background-image: url('/paper-texture-white.png'); background-position: center; background-size: cover; background-repeat: repeat; background-blend-mode: multiply; opacity: .82; mix-blend-mode: multiply; pointer-events: none; }
 .app { --design-scale: 1; width: 100vw; height: 100dvh; min-height: 0; overflow: hidden; color: #670000; background: #fbfdf9; }
 .landing-page { position: absolute; z-index: 1; top: 50%; left: 50%; width: 1440px; height: 1000px; min-height: 0; overflow: hidden; pointer-events: none; transform: translate(-50%, -50%) scale(var(--design-scale)); transform-origin: center; }
 .landing-intro { position: absolute; z-index: 2; top: 260px; left: 485px; width: 840px; height: 235px; box-sizing: border-box; color: #000; opacity: .71; font-family: "Marcellus", "Marcellus Local", serif; font-size: 18px; font-weight: 400; line-height: 22px; letter-spacing: 0; text-align: right; }
