@@ -3433,7 +3433,9 @@ watch(flightHeightMax, (value) => {
   width: 0.78rem;
   height: 0.78rem;
   flex: 0 0 auto;
-  background: url('/icons/new-window-flaticon-16799159.png') center / contain no-repeat;
+  border-radius: 0.14rem;
+  /* White source + invert filter renders as a black badge with a white glyph. */
+  background: #fff url('/icons/new-window-flaticon-16799159.png') center / contain no-repeat;
   filter: invert(1);
   opacity: 0.88;
 }
