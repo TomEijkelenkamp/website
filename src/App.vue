@@ -1002,6 +1002,7 @@ watch(
   ],
   redrawTextMask,
 )
+watch(navigationTextSize, updateDesignScale)
 const activeFont = computed(() => fontOptions.find(font => font.name === selectedFont.value) || fontOptions[0])
 let fontLoadRequest = 0
 
@@ -2490,10 +2491,21 @@ function performResize() {
 function updateDesignScale() {
   layoutViewportWidth.value = window.innerWidth
   layoutViewportHeight.value = window.innerHeight
+  typographyViewportScale.value = clamp(0.45, window.innerWidth / 900, 1)
   designScale.value = Math.min(
     (window.innerWidth * 0.92) / 1440,
     (window.innerHeight * 0.92) / 1000,
   )
+
+  // The visible menu is rendered through the WebGL text mask, but its anchor
+  // lives inside the centred/scaled 1440×1000 design canvas. Convert the
+  // viewport-centred menu band back to that canvas coordinate system so its
+  // centre always lines up exactly with the fixed overlay edge.
+  const menuBandHeight = Math.max(13, navigationTextSize.value * typographyViewportScale.value) + 48
+  const menuButtonHeight = 34
+  desktopMenuTop.value = 500
+    + (menuBandHeight / 2 - window.innerHeight / 2) / Math.max(0.001, designScale.value)
+    - menuButtonHeight / 2
 
   const limits = desktopLayoutLimits.value
   desktopLandingOffsetX.value = clamp(limits.minX, desktopLandingOffsetX.value, limits.maxX)
@@ -3529,7 +3541,7 @@ watch(flightHeightMax, (value) => {
 
 @media (max-width: 760px) {
   .overlay {
-    inset: calc(var(--navigation-text-size, 18px) + 2rem) 0 0;
+    inset: calc(env(safe-area-inset-top) + var(--navigation-text-size, 18px) + 3rem) 0 0;
     align-items: center;
   }
 
@@ -3611,7 +3623,7 @@ watch(flightHeightMax, (value) => {
 .landing-socials a:nth-child(4) { mask-image: url('/icons/email.svg'); }
 .landing-socials img { display: none; }
 .menu-design-canvas { position: fixed; z-index: 1200; top: 50%; left: 50%; width: 1440px; height: 1000px; pointer-events: none; transform: translate(-50%, -50%) scale(var(--design-scale)); transform-origin: center; }
-.top-bar { top: calc((var(--navigation-text-size, 18px) + 3rem - 34px) / 2); right: auto; left: var(--desktop-menu-left, 850px); width: 770px; height: 34px; justify-content: space-between; gap: 0; transform: none; pointer-events: none; }
+.top-bar { top: var(--desktop-menu-top, 6px); right: auto; left: var(--desktop-menu-left, 850px); width: 770px; height: 34px; justify-content: space-between; gap: 0; transform: none; pointer-events: none; }
 .top-bar button { width: auto; height: 34px; padding: 0; color: #670000; font-family: "Eagle Lake", serif; font-size: 28px; font-weight: 400; line-height: 34px; letter-spacing: 0; }
 .top-bar button { pointer-events: auto; }
 .app.menu-mask-ready .top-bar button,
@@ -3665,7 +3677,7 @@ watch(flightHeightMax, (value) => {
 
   .top-bar {
     position: fixed;
-    top: max(12px, calc((var(--navigation-text-size, 18px) + 3rem - 25px) / 2 + env(safe-area-inset-top)));
+    top: calc(env(safe-area-inset-top) + (var(--navigation-text-size, 18px) + 3rem - 21px) / 2);
     right: max(14px, calc(env(safe-area-inset-right) + 10px));
     left: auto;
     width: auto;
