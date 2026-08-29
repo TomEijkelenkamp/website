@@ -132,6 +132,7 @@
                 :class="{ 'is-playing': playingAnimationId === item.id }"
                 :poster="item.thumbnail"
                 muted
+                autoplay
                 playsinline
                 disablepictureinpicture
                 disableremoteplayback
@@ -139,6 +140,7 @@
                 x-webkit-airplay="deny"
                 preload="auto"
                 @canplay="resumeAnimationIfActive(item)"
+                @loadeddata="resumeAnimationIfActive(item)"
                 @error="handleAnimationVideoFailure(item.id)"
                 @playing="markAnimationPlaying(item.id)"
                 @ended="advanceAnimation(item)"
