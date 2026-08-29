@@ -85,14 +85,14 @@
           <!-- Research tab -->
           <div v-if="activeOverlay === 'research'" class="research-list">
             <article
-              v-for="item in researchItems"
+              v-for="(item, index) in researchItems"
               :key="item.id"
               :class="['research-item', { 'no-image': !item.image }]"
             >
               <!-- image, only if provided -->
-              <div v-if="item.image" class="research-image image-load-shell">
-                <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
-                <img :src="item.image" :alt="item.title" loading="lazy" decoding="async" @load="markImageLoaded" @error="markImageLoaded" />
+              <div v-if="item.image && index <= tabImageProgress.research" class="research-image image-load-shell">
+                <span class="image-loader-lottie" :style="{ '--loader-phase': `${loaderPhase('research', index)}s` }" aria-hidden="true"><i></i><i></i></span>
+                <img :src="item.image" :alt="item.title" loading="lazy" decoding="async" :data-load-tab="'research'" :data-load-index="index" @load="handleSequentialImageLoad($event, 'research', index)" @error="handleSequentialImageLoad($event, 'research', index)" />
               </div>
 
               <!-- text -->
@@ -105,7 +105,7 @@
 
           <div v-else-if="activeOverlay === 'animation'" class="animation-grid">
           <article
-            v-for="item in animationItems"
+            v-for="(item, index) in animationItems"
             :key="item.id"
             class="animation-item"
             :class="{ 'animation-item--edge-crop': item.cropRightEdge }"
@@ -120,13 +120,15 @@
             @click="toggleAnimation(item)"
           >
             <div class="animation-thumb image-load-shell">
-              <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
+              <span class="image-loader-lottie" :style="{ '--loader-phase': `${loaderPhase('animation', index)}s` }" aria-hidden="true"><i></i><i></i></span>
               <img
                 :src="item.thumbnail"
                 :alt="item.title"
+                :data-load-tab="'animation'"
+                :data-load-index="index"
                 decoding="async"
-                @load="markImageLoaded"
-                @error="markImageLoaded"
+                @load="handleSequentialImageLoad($event, 'animation', index)"
+                @error="handleSequentialImageLoad($event, 'animation', index)"
                 :class="{ 'is-video-playing': playingAnimationId === item.id }"
               />
               <video
@@ -160,9 +162,9 @@
               rel="noopener noreferrer"
               aria-label="Love letters to robots bekijken op YouTube"
             >
-              <div class="dance-image-wrapper image-load-shell">
-                <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
-                <img src="/dance/love-letters.webp" alt="Love letters to robots" loading="lazy" decoding="async" @load="markImageLoaded" @error="markImageLoaded" />
+              <div v-if="tabImageProgress.dance >= 0" class="dance-image-wrapper image-load-shell">
+                <span class="image-loader-lottie" style="--loader-phase: 1.23s" aria-hidden="true"><i></i><i></i></span>
+                <img src="/dance/love-letters.webp" alt="Love letters to robots" loading="lazy" decoding="async" data-load-tab="dance" data-load-index="0" @load="handleSequentialImageLoad($event, 'dance', 0)" @error="handleSequentialImageLoad($event, 'dance', 0)" />
                 <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
@@ -174,9 +176,9 @@
               rel="noopener noreferrer"
               aria-label="Untitled bekijken op YouTube"
             >
-              <div class="dance-image-wrapper image-load-shell">
-                <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
-                <img src="/dance/untitled.webp" alt="Untitled" loading="lazy" decoding="async" @load="markImageLoaded" @error="markImageLoaded" />
+              <div v-if="tabImageProgress.dance >= 1" class="dance-image-wrapper image-load-shell">
+                <span class="image-loader-lottie" style="--loader-phase: 0.41s" aria-hidden="true"><i></i><i></i></span>
+                <img src="/dance/untitled.webp" alt="Untitled" loading="lazy" decoding="async" data-load-tab="dance" data-load-index="1" @load="handleSequentialImageLoad($event, 'dance', 1)" @error="handleSequentialImageLoad($event, 'dance', 1)" />
                 <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
@@ -188,9 +190,9 @@
               rel="noopener noreferrer"
               aria-label="2Dance Untitled 2026 bekijken op YouTube"
             >
-              <div class="dance-image-wrapper image-load-shell">
-                <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
-                <img src="/dance/untitled-2026.webp" alt="2Dance Untitled 2026" loading="lazy" decoding="async" @load="markImageLoaded" @error="markImageLoaded" />
+              <div v-if="tabImageProgress.dance >= 2" class="dance-image-wrapper image-load-shell">
+                <span class="image-loader-lottie" style="--loader-phase: 1.77s" aria-hidden="true"><i></i><i></i></span>
+                <img src="/dance/untitled-2026.webp" alt="2Dance Untitled 2026" loading="lazy" decoding="async" data-load-tab="dance" data-load-index="2" @load="handleSequentialImageLoad($event, 'dance', 2)" @error="handleSequentialImageLoad($event, 'dance', 2)" />
                 <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
@@ -479,6 +481,7 @@ const activeOverlay = ref(null) // 'research' | 'animation' | 'dance' | 'me' | n
 const hoveredMenu = ref(null)
 const menuMaskReady = ref(false)
 const tabPaperScrollY = ref(0)
+const tabImageProgress = reactive({ research: 0, animation: 0, dance: 0 })
 
 function updateTabPaperScroll(event) {
   tabPaperScrollY.value = event.currentTarget.scrollTop
@@ -554,11 +557,31 @@ function markImageLoaded(event) {
   image.closest('.image-load-shell')?.classList.add('is-loaded')
 }
 
+function loaderPhase(tab, index) {
+  // Deterministic pseudo-random phase: natural-looking and stable per card.
+  let hash = 2166136261
+  for (const char of `${tab}:${index}`) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619)
+  return ((hash >>> 0) / 4294967296 * 2).toFixed(3)
+}
+
+function handleSequentialImageLoad(event, tab, index) {
+  markImageLoaded(event)
+  if (index >= tabImageProgress[tab]) {
+    tabImageProgress[tab] = index + 1
+    nextTick(syncLoadedImages)
+  }
+}
+
 function syncLoadedImages() {
   document.querySelectorAll('.image-load-shell > img').forEach((image) => {
     if (image.complete && image.naturalWidth > 0) {
       image.classList.add('is-loaded')
       image.closest('.image-load-shell')?.classList.add('is-loaded')
+      const tab = image.dataset.loadTab
+      const index = Number(image.dataset.loadIndex)
+      if (tab && Number.isFinite(index) && index >= tabImageProgress[tab]) {
+        tabImageProgress[tab] = index + 1
+      }
     }
   })
 }
@@ -3771,10 +3794,11 @@ watch(flightHeightMax, (value) => {
   opacity: 0;
   transform: scale(0.613);
   animation: lottiefiles-image-loading var(--image-loader-speed, 2s) cubic-bezier(.322, 0, .243, 1) infinite;
+  animation-delay: var(--loader-phase, 0s);
 }
 
 .image-loader-lottie i:nth-child(2) {
-  animation-delay: calc(var(--image-loader-speed, 2s) * 0.2915);
+  animation-delay: calc(var(--loader-phase, 0s) + (var(--image-loader-speed, 2s) * 0.2915));
 }
 
 .image-loader-preview {
