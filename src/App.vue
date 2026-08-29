@@ -90,9 +90,8 @@
               :class="['research-item', { 'no-image': !item.image }]"
             >
               <!-- image, only if provided -->
-              <div v-if="item.image && index <= tabImageProgress.research" class="research-image image-load-shell">
-                <span class="image-loader-lottie" :style="{ '--loader-phase': `${loaderPhase('research', index)}s` }" aria-hidden="true"><i></i><i></i></span>
-                <img :src="item.image" :alt="item.title" loading="lazy" decoding="async" :data-load-tab="'research'" :data-load-index="index" @load="handleSequentialImageLoad($event, 'research', index)" @error="handleSequentialImageLoad($event, 'research', index)" />
+              <div v-if="item.image" class="research-image">
+                <img :src="item.image" :alt="item.title" loading="lazy" decoding="async" />
               </div>
 
               <!-- text -->
@@ -119,16 +118,11 @@
             @focusout="stopAnimation(item.id)"
             @click="toggleAnimation(item)"
           >
-            <div class="animation-thumb image-load-shell">
-              <span class="image-loader-lottie" :style="{ '--loader-phase': `${loaderPhase('animation', index)}s` }" aria-hidden="true"><i></i><i></i></span>
+            <div class="animation-thumb">
               <img
                 :src="item.thumbnail"
                 :alt="item.title"
-                :data-load-tab="'animation'"
-                :data-load-index="index"
                 decoding="async"
-                @load="handleSequentialImageLoad($event, 'animation', index)"
-                @error="handleSequentialImageLoad($event, 'animation', index)"
                 :class="{ 'is-video-playing': playingAnimationId === item.id }"
               />
               <video
@@ -162,9 +156,8 @@
               rel="noopener noreferrer"
               aria-label="Love letters to robots bekijken op YouTube"
             >
-              <div v-if="tabImageProgress.dance >= 0" class="dance-image-wrapper image-load-shell">
-                <span class="image-loader-lottie" style="--loader-phase: 1.23s" aria-hidden="true"><i></i><i></i></span>
-                <img src="/dance/love-letters.webp" alt="Love letters to robots" loading="lazy" decoding="async" data-load-tab="dance" data-load-index="0" @load="handleSequentialImageLoad($event, 'dance', 0)" @error="handleSequentialImageLoad($event, 'dance', 0)" />
+              <div class="dance-image-wrapper">
+                <img src="/dance/love-letters.webp" alt="Love letters to robots" loading="lazy" decoding="async" />
                 <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
@@ -176,9 +169,8 @@
               rel="noopener noreferrer"
               aria-label="Untitled bekijken op YouTube"
             >
-              <div v-if="tabImageProgress.dance >= 1" class="dance-image-wrapper image-load-shell">
-                <span class="image-loader-lottie" style="--loader-phase: 0.41s" aria-hidden="true"><i></i><i></i></span>
-                <img src="/dance/untitled.webp" alt="Untitled" loading="lazy" decoding="async" data-load-tab="dance" data-load-index="1" @load="handleSequentialImageLoad($event, 'dance', 1)" @error="handleSequentialImageLoad($event, 'dance', 1)" />
+              <div class="dance-image-wrapper">
+                <img src="/dance/untitled.webp" alt="Untitled" loading="lazy" decoding="async" />
                 <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
@@ -190,9 +182,8 @@
               rel="noopener noreferrer"
               aria-label="2Dance Untitled 2026 bekijken op YouTube"
             >
-              <div v-if="tabImageProgress.dance >= 2" class="dance-image-wrapper image-load-shell">
-                <span class="image-loader-lottie" style="--loader-phase: 1.77s" aria-hidden="true"><i></i><i></i></span>
-                <img src="/dance/untitled-2026.webp" alt="2Dance Untitled 2026" loading="lazy" decoding="async" data-load-tab="dance" data-load-index="2" @load="handleSequentialImageLoad($event, 'dance', 2)" @error="handleSequentialImageLoad($event, 'dance', 2)" />
+              <div class="dance-image-wrapper">
+                <img src="/dance/untitled-2026.webp" alt="2Dance Untitled 2026" loading="lazy" decoding="async" />
                 <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
@@ -289,32 +280,6 @@
       <section class="front-page-paper-settings">
         <strong>Front page</strong>
         <HsvColorPicker label="Paper tint" v-bind="frontPagePaperTint" @update="Object.assign(frontPagePaperTint, $event)" />
-      </section>
-
-      <section class="image-loader-settings">
-        <strong>Image loading</strong>
-        <div class="image-loader-preview image-load-shell" aria-label="Live preview of the image loading animation">
-          <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
-        </div>
-        <div class="color-picker-grid">
-          <HsvColorPicker label="Background A" v-bind="imageLoaderBackgroundA" @update="Object.assign(imageLoaderBackgroundA, $event)" />
-          <HsvColorPicker label="Background B" v-bind="imageLoaderBackgroundB" @update="Object.assign(imageLoaderBackgroundB, $event)" />
-          <HsvColorPicker label="Circle color" v-bind="imageLoaderRingColor" @update="Object.assign(imageLoaderRingColor, $event)" />
-        </div>
-        <div class="two-columns">
-          <label>
-            Circle thickness: {{ imageLoaderThickness.toFixed(1) }} px
-            <input type="range" min="0.5" max="12" step="0.5" v-model.number="imageLoaderThickness" />
-          </label>
-          <label>
-            Circle size: {{ imageLoaderSize.toFixed(0) }} px
-            <input type="range" min="30" max="180" step="2" v-model.number="imageLoaderSize" />
-          </label>
-          <label>
-            Animation speed: {{ imageLoaderSpeed.toFixed(2) }} s
-            <input type="range" min="0.4" max="4" step="0.05" v-model.number="imageLoaderSpeed" />
-          </label>
-        </div>
       </section>
 
       <section class="typography-settings">
@@ -482,6 +447,9 @@ const hoveredMenu = ref(null)
 const menuMaskReady = ref(false)
 const tabPaperScrollY = ref(0)
 const tabImageProgress = reactive({ research: 0, animation: 0, dance: 0 })
+// Keep image completion across tab unmounts so returning to a tab never
+// replays the placeholder for an image that has already been displayed.
+const loadedImageSources = new Set()
 
 function updateTabPaperScroll(event) {
   tabPaperScrollY.value = event.currentTarget.scrollTop
@@ -554,11 +522,24 @@ function openExternal(url) {
 function markImageLoaded(event) {
   const image = event.currentTarget
   if (image.dataset.placeholderComplete) return
-  image.dataset.placeholderComplete = 'pending'
-  window.setTimeout(() => {
+  const source = image.currentSrc || image.src
+  if (source && loadedImageSources.has(source)) {
     image.dataset.placeholderComplete = 'done'
     image.classList.add('is-loaded')
     image.closest('.image-load-shell')?.classList.add('is-loaded')
+    return
+  }
+  image.dataset.placeholderComplete = 'pending'
+  window.setTimeout(() => {
+    // Fade the loader out first; reveal the image only after that fade has
+    // completed so the two layers can never be visible on top of each other.
+    const shell = image.closest('.image-load-shell')
+    shell?.classList.add('is-loaded')
+    window.setTimeout(() => {
+      image.dataset.placeholderComplete = 'done'
+      image.classList.add('is-loaded')
+      if (source) loadedImageSources.add(source)
+    }, 380)
   }, 320)
 }
 
@@ -579,6 +560,18 @@ function handleSequentialImageLoad(event, tab, index) {
 
 function syncLoadedImages() {
   document.querySelectorAll('.image-load-shell > img').forEach((image) => {
+    if (!image.dataset.placeholderFallbackScheduled) {
+      image.dataset.placeholderFallbackScheduled = 'true'
+      window.setTimeout(() => {
+        // Never leave a card permanently blank if a browser/cache misses the
+        // load event. The native image (or video poster) is the final fallback.
+        if (!image.classList.contains('is-loaded')) {
+          image.closest('.image-load-shell')?.classList.add('is-loaded')
+          image.classList.add('is-loaded')
+          image.dataset.placeholderComplete = 'done'
+        }
+      }, 4000)
+    }
     if (image.complete && image.naturalWidth > 0) {
       markImageLoaded({ currentTarget: image })
       const tab = image.dataset.loadTab
@@ -781,8 +774,6 @@ function handleAnimationVideoFailure(id) {
 }
 
 function startAnimation(item) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-
   if (
     activeAnimationId.value === item.id &&
     (startingAnimationId.value === item.id || playingAnimationId.value === item.id)
@@ -3798,11 +3789,12 @@ watch(flightHeightMax, (value) => {
   opacity: 0;
   transform: scale(0.613);
   animation: lottiefiles-image-loading var(--image-loader-speed, 2s) cubic-bezier(.322, 0, .243, 1) infinite;
-  animation-delay: var(--loader-phase, 0s);
+  animation-delay: calc(-1 * var(--loader-phase, 0s));
+  animation-fill-mode: both;
 }
 
 .image-loader-lottie i:nth-child(2) {
-  animation-delay: calc(var(--loader-phase, 0s) + (var(--image-loader-speed, 2s) * 0.2915));
+  animation-delay: calc(-1 * (var(--loader-phase, 0s) + (var(--image-loader-speed, 2s) * 0.2915)));
 }
 
 .image-loader-preview {
@@ -3823,7 +3815,7 @@ watch(flightHeightMax, (value) => {
 .image-load-shell > img {
   position: relative;
   z-index: 1;
-  opacity: 1;
+  opacity: 0;
   color: transparent;
   font-size: 0;
   transition: opacity 0.42s ease;
