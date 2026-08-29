@@ -553,8 +553,13 @@ function openExternal(url) {
 
 function markImageLoaded(event) {
   const image = event.currentTarget
-  image.classList.add('is-loaded')
-  image.closest('.image-load-shell')?.classList.add('is-loaded')
+  if (image.dataset.placeholderComplete) return
+  image.dataset.placeholderComplete = 'pending'
+  window.setTimeout(() => {
+    image.dataset.placeholderComplete = 'done'
+    image.classList.add('is-loaded')
+    image.closest('.image-load-shell')?.classList.add('is-loaded')
+  }, 320)
 }
 
 function loaderPhase(tab, index) {
@@ -575,8 +580,7 @@ function handleSequentialImageLoad(event, tab, index) {
 function syncLoadedImages() {
   document.querySelectorAll('.image-load-shell > img').forEach((image) => {
     if (image.complete && image.naturalWidth > 0) {
-      image.classList.add('is-loaded')
-      image.closest('.image-load-shell')?.classList.add('is-loaded')
+      markImageLoaded({ currentTarget: image })
       const tab = image.dataset.loadTab
       const index = Number(image.dataset.loadIndex)
       if (tab && Number.isFinite(index) && index >= tabImageProgress[tab]) {
@@ -3187,7 +3191,7 @@ watch(flightHeightMax, (value) => {
 
 .overlay {
   position: fixed;
-  inset: calc(var(--navigation-text-size, 18px) + 2.75rem) 0 0;
+  inset: calc(var(--navigation-text-size, 18px) + 3rem) 0 0;
   isolation: isolate;
   background: transparent;
   display: flex;
@@ -3612,7 +3616,7 @@ watch(flightHeightMax, (value) => {
 .landing-socials a:nth-child(4) { mask-image: url('/icons/email.svg'); }
 .landing-socials img { display: none; }
 .menu-design-canvas { position: fixed; z-index: 1200; top: 50%; left: 50%; width: 1440px; height: 1000px; pointer-events: none; transform: translate(-50%, -50%) scale(var(--design-scale)); transform-origin: center; }
-.top-bar { top: var(--desktop-menu-top, 6px); right: auto; left: var(--desktop-menu-left, 850px); width: 770px; height: 34px; justify-content: space-between; gap: 0; transform: none; pointer-events: none; }
+.top-bar { top: calc((var(--navigation-text-size, 18px) + 3rem - 34px) / 2); right: auto; left: var(--desktop-menu-left, 850px); width: 770px; height: 34px; justify-content: space-between; gap: 0; transform: none; pointer-events: none; }
 .top-bar button { width: auto; height: 34px; padding: 0; color: #670000; font-family: "Eagle Lake", serif; font-size: 28px; font-weight: 400; line-height: 34px; letter-spacing: 0; }
 .top-bar button { pointer-events: auto; }
 .app.menu-mask-ready .top-bar button,
@@ -3666,7 +3670,7 @@ watch(flightHeightMax, (value) => {
 
   .top-bar {
     position: fixed;
-    top: max(12px, calc(env(safe-area-inset-top) + 8px));
+    top: max(12px, calc((var(--navigation-text-size, 18px) + 3rem - 25px) / 2 + env(safe-area-inset-top)));
     right: max(14px, calc(env(safe-area-inset-right) + 10px));
     left: auto;
     width: auto;
