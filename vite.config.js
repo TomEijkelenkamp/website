@@ -5,10 +5,10 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     vue(),
-    vueDevTools(),
+    ...(command === 'serve' ? [vueDevTools()] : []),
   ],
   resolve: {
     alias: {
@@ -22,4 +22,14 @@ export default defineConfig({
       ignored: ['**/public/fonts/google/**'],
     },
   },
-})
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three'],
+          vue: ['vue'],
+        },
+      },
+    },
+  },
+}))

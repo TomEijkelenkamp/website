@@ -9,8 +9,8 @@
       </section>
       <section class="landing-profile" aria-labelledby="landing-name">
         <div class="landing-portrait-stack">
-          <img class="landing-paper" src="/design/torn-paper-sheet-cream-02(1).png" alt="" aria-hidden="true" />
-          <img class="landing-portrait" src="/me/me.jpg" alt="Portrait of Tom Eijkelenkamp" />
+          <img class="landing-paper" src="/design/torn-paper-sheet-cream-02.webp" alt="" aria-hidden="true" decoding="async" />
+          <img class="landing-portrait" src="/me/me.webp" alt="Portrait of Tom Eijkelenkamp" fetchpriority="high" decoding="async" />
         </div>
         <div class="landing-profile-copy">
           <h1 id="landing-name">Tom Eijkelenkamp</h1>
@@ -83,15 +83,16 @@
       <div class="overlay-content">
         <div class="overlay-body" @scroll="updateTabPaperScroll">
           <!-- Research tab -->
-          <div v-show="activeOverlay === 'research'" class="research-list">
+          <div v-if="activeOverlay === 'research'" class="research-list">
             <article
               v-for="item in researchItems"
               :key="item.id"
               :class="['research-item', { 'no-image': !item.image }]"
             >
               <!-- image, only if provided -->
-              <div v-if="item.image" class="research-image">
-                <img :src="item.image" :alt="item.title" />
+              <div v-if="item.image" class="research-image image-load-shell">
+                <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
+                <img :src="item.image" :alt="item.title" loading="lazy" decoding="async" @load="markImageLoaded" @error="markImageLoaded" />
               </div>
 
               <!-- text -->
@@ -102,7 +103,7 @@
             </article>
           </div>
 
-          <div v-show="activeOverlay === 'animation'" class="animation-grid">
+          <div v-else-if="activeOverlay === 'animation'" class="animation-grid">
           <article
             v-for="item in animationItems"
             :key="item.id"
@@ -111,16 +112,21 @@
             tabindex="0"
             :aria-label="`${item.title} afspelen`"
             @mouseenter="startAnimationFromHover(item)"
+            @pointerenter="startAnimationFromHover(item)"
             @mouseleave="stopAnimationFromHover(item.id)"
             @pointerdown="markAnimationPointerInput"
             @focusin="startAnimationFromFocus(item, $event)"
             @focusout="stopAnimation(item.id)"
             @click="toggleAnimation(item)"
           >
-            <div class="animation-thumb">
+            <div class="animation-thumb image-load-shell">
+              <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
               <img
                 :src="item.thumbnail"
                 :alt="item.title"
+                decoding="async"
+                @load="markImageLoaded"
+                @error="markImageLoaded"
                 :class="{ 'is-video-playing': playingAnimationId === item.id }"
               />
               <video
@@ -135,9 +141,9 @@
                 disableremoteplayback
                 controlslist="nodownload noremoteplayback"
                 x-webkit-airplay="deny"
-                preload="metadata"
+                preload="auto"
                 @canplay="resumeAnimationIfActive(item)"
-                @error="markAnimationStartFailed(item.id)"
+                @error="handleAnimationVideoFailure(item.id)"
                 @playing="markAnimationPlaying(item.id)"
                 @ended="advanceAnimation(item)"
               />
@@ -146,7 +152,7 @@
         </div>
 
 
-          <div v-show="activeOverlay === 'dance'" class="dance-grid">
+          <div v-else-if="activeOverlay === 'dance'" class="dance-grid">
             <a
               class="dance-item"
               href="https://www.youtube.com/watch?v=s-8xOs1JN6A"
@@ -154,8 +160,9 @@
               rel="noopener noreferrer"
               aria-label="Love letters to robots bekijken op YouTube"
             >
-              <div class="dance-image-wrapper">
-                <img src="/dance/love-letters.jpg" alt="Love letters to robots" />
+              <div class="dance-image-wrapper image-load-shell">
+                <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
+                <img src="/dance/love-letters.webp" alt="Love letters to robots" loading="lazy" decoding="async" @load="markImageLoaded" @error="markImageLoaded" />
                 <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
@@ -167,8 +174,9 @@
               rel="noopener noreferrer"
               aria-label="Untitled bekijken op YouTube"
             >
-              <div class="dance-image-wrapper">
-                <img src="/dance/untitled.jpg" alt="Untitled" />
+              <div class="dance-image-wrapper image-load-shell">
+                <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
+                <img src="/dance/untitled.webp" alt="Untitled" loading="lazy" decoding="async" @load="markImageLoaded" @error="markImageLoaded" />
                 <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
@@ -180,15 +188,16 @@
               rel="noopener noreferrer"
               aria-label="2Dance Untitled 2026 bekijken op YouTube"
             >
-              <div class="dance-image-wrapper">
-                <img src="/dance/untitled-2026.jpg" alt="2Dance Untitled 2026" />
+              <div class="dance-image-wrapper image-load-shell">
+                <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
+                <img src="/dance/untitled-2026.webp" alt="2Dance Untitled 2026" loading="lazy" decoding="async" @load="markImageLoaded" @error="markImageLoaded" />
                 <span class="youtube-hover-icon" aria-hidden="true"><span class="youtube-mark"></span><span class="new-tab-icon"></span></span>
               </div>
             </a>
           </div>
 
 
-          <section v-show="activeOverlay === 'me'" class="contact-panel" aria-labelledby="contact-heading">
+          <section v-else-if="activeOverlay === 'me'" class="contact-panel" aria-labelledby="contact-heading">
             <div class="contact-intro">
               <p class="contact-kicker">Get in touch</p>
               <h2 id="contact-heading">Let’s create something together.</h2>
@@ -278,6 +287,32 @@
       <section class="front-page-paper-settings">
         <strong>Front page</strong>
         <HsvColorPicker label="Paper tint" v-bind="frontPagePaperTint" @update="Object.assign(frontPagePaperTint, $event)" />
+      </section>
+
+      <section class="image-loader-settings">
+        <strong>Image loading</strong>
+        <div class="image-loader-preview image-load-shell" aria-label="Live preview of the image loading animation">
+          <span class="image-loader-lottie" aria-hidden="true"><i></i><i></i></span>
+        </div>
+        <div class="color-picker-grid">
+          <HsvColorPicker label="Background A" v-bind="imageLoaderBackgroundA" @update="Object.assign(imageLoaderBackgroundA, $event)" />
+          <HsvColorPicker label="Background B" v-bind="imageLoaderBackgroundB" @update="Object.assign(imageLoaderBackgroundB, $event)" />
+          <HsvColorPicker label="Circle color" v-bind="imageLoaderRingColor" @update="Object.assign(imageLoaderRingColor, $event)" />
+        </div>
+        <div class="two-columns">
+          <label>
+            Circle thickness: {{ imageLoaderThickness.toFixed(1) }} px
+            <input type="range" min="0.5" max="12" step="0.5" v-model.number="imageLoaderThickness" />
+          </label>
+          <label>
+            Circle size: {{ imageLoaderSize.toFixed(0) }} px
+            <input type="range" min="30" max="180" step="2" v-model.number="imageLoaderSize" />
+          </label>
+          <label>
+            Animation speed: {{ imageLoaderSpeed.toFixed(2) }} s
+            <input type="range" min="0.4" max="4" step="0.05" v-model.number="imageLoaderSpeed" />
+          </label>
+        </div>
       </section>
 
       <section class="typography-settings">
@@ -374,6 +409,21 @@
             <input type="range" min="0" max="5" step="0.05" v-model.number="cohesionWeight" />
           </label>
         </section>
+      </div>
+
+      <div class="two-columns">
+        <section>
+          <strong>Flight height</strong>
+          <label>
+            Minimum: {{ flightHeightMin.toFixed(0) }} px
+            <input type="range" min="0" max="200" step="5" v-model.number="flightHeightMin" />
+          </label>
+          <label>
+            Maximum: {{ flightHeightMax.toFixed(0) }} px
+            <input type="range" min="10" max="300" step="5" v-model.number="flightHeightMax" />
+          </label>
+        </section>
+
       </div>
 
       <div class="color-picker-grid">
@@ -475,7 +525,7 @@ async function submitContactForm() {
 }
 
 // NEW: flag to hide overlay while we prewarm
-const isPrewarming = ref(true)
+const isPrewarming = ref(false)
 
 function openOverlay(which) {
   // toggle behavior: click same button again -> close
@@ -494,11 +544,26 @@ async function redrawTextMask() {
   loadSvgAsTexture(img, width, height)
 }
 
-watch([hoveredMenu, activeOverlay], redrawTextMask)
-
 function openExternal(url) {
   window.open(url, '_blank')
 }
+
+function markImageLoaded(event) {
+  const image = event.currentTarget
+  image.classList.add('is-loaded')
+  image.closest('.image-load-shell')?.classList.add('is-loaded')
+}
+
+function syncLoadedImages() {
+  document.querySelectorAll('.image-load-shell > img').forEach((image) => {
+    if (image.complete && image.naturalWidth > 0) {
+      image.classList.add('is-loaded')
+      image.closest('.image-load-shell')?.classList.add('is-loaded')
+    }
+  })
+}
+
+watch(activeOverlay, () => nextTick(syncLoadedImages), { flush: 'post' })
 
 const overlayTitle = computed(() => {
   switch (activeOverlay.value) {
@@ -520,25 +585,25 @@ const researchItems = ref([
     id: 1,
     title: 'Composition in AI Art',
     text: 'A study on improving artistic composition in generated images, looking at building blocks and theories to create effects like focal point, balance, and visual flow.',
-    image: '/research/master_thesis_front_page_compressed.png', // put PNGs in /public/research/
+    image: '/research/master-thesis.webp',
   },
   {
     id: 2,
     title: 'What causes Fine-Art to gain Popularity',
     text: 'Using bayesian networks to analyze which visual features relate to popularity in fine-art images and creating a causal diagram out of this.',
-    image: '/research/correlations_to_popularity_front_page_compressed.png',
+    image: '/research/correlations-to-popularity.webp',
   },
   {
     id: 3,
     title: 'Lighting in AI Art',
     text: 'Pilot study on measuring light realism in generated images.',
-    image: '/research/research_internship_front_page_compressed.png',
+    image: '/research/research-internship.webp',
   },
   {
     id: 4,
     title: 'Subdivision Shading',
     text: 'Phong shading leads to artifacts on irregular vertices. Subdivision shading aims to address these issues by smoothing normals around irregularities.',
-    image: '/research/subdivision_shading_front_page_compressed.png', // 👈 no picture for this one
+    image: '/research/subdivision-shading.webp',
   },
   {
     id: 5,
@@ -565,7 +630,7 @@ const animationItems = ref([
     id: 1,
     title: 'Painted movement study',
     url: 'https://www.instagram.com/p/DUnz5v3CMAQ/?img_index=1',
-    thumbnail: '/animation/painted-figure.png',
+    thumbnail: '/animation/painted-figure.webp',
     videos: ['/animation/videos/painted-figure-01.mp4'],
   },
   {
@@ -600,21 +665,21 @@ const animationItems = ref([
     id: 6,
     title: 'Generative art experiment',
     url: 'https://www.instagram.com/p/DMkLJEeu8YD/',
-    thumbnail: '/animation/moon.png',
+    thumbnail: '/animation/moon.webp',
     videos: ['/animation/videos/generative-art-01.mp4'],
   },
   {
     id: 7,
     title: 'Projection + movement test',
     url: 'https://www.instagram.com/p/DKO7ZbPs9O6/',
-    thumbnail: '/animation/fire.png',
+    thumbnail: '/animation/fire.webp',
     videos: ['/animation/videos/projection-movement-01.mp4'],
   },
   {
     id: 8,
     title: 'Algorithmic art piece',
     url: 'https://www.instagram.com/p/DKMJjqQITft/',
-    thumbnail: '/animation/creature.png',
+    thumbnail: '/animation/creature.webp',
     videos: ['/animation/videos/algorithmic-art-02.mp4'],
   },
   {
@@ -640,6 +705,7 @@ function setAnimationVideoRef(element, id) {
 }
 
 function activeAnimationSource(item) {
+  if (activeAnimationId.value !== item.id) return undefined
   const index = animationIndexes[item.id] || 0
   return item.videos[index]
 }
@@ -649,6 +715,10 @@ async function playActiveAnimation(item) {
   const video = animationVideoRefs.get(item.id)
   if (!video || activeAnimationId.value !== item.id) return
   video.muted = true
+  // The source is attached only for the active card. Explicitly restarting
+  // the media load avoids browsers retaining an empty state after a prior
+  // hover or after the card was remounted by v-if.
+  if (video.readyState === 0) video.load()
   video.play().catch(() => {
     if (activeAnimationId.value !== item.id) return markAnimationStartFailed(item.id)
 
@@ -674,6 +744,13 @@ function resumeAnimationIfActive(item) {
 
 function markAnimationStartFailed(id) {
   if (startingAnimationId.value === id) startingAnimationId.value = null
+}
+
+function handleAnimationVideoFailure(id) {
+  if (activeAnimationId.value !== id) return
+  startingAnimationId.value = null
+  playingAnimationId.value = null
+  activeAnimationId.value = null
 }
 
 function startAnimation(item) {
@@ -722,11 +799,11 @@ function startAnimationFromFocus(item, event) {
 }
 
 function startAnimationFromHover(item) {
-  if (window.matchMedia('(hover: hover)').matches) startAnimation(item)
+  startAnimation(item)
 }
 
 function stopAnimationFromHover(id) {
-  if (window.matchMedia('(hover: hover)').matches) stopAnimation(id)
+  stopAnimation(id)
 }
 
 function markAnimationPointerInput() {
@@ -740,28 +817,22 @@ function toggleAnimation(item) {
 }
 
 function advanceAnimation(item) {
+  const video = animationVideoRefs.get(item.id)
+  if (item.videos.length === 1) {
+    if (video && activeAnimationId.value === item.id) {
+      video.pause()
+      video.currentTime = 0
+      // Keep the poster thumbnail visible after playback instead of leaving
+      // the ended video layer over the card.
+      playingAnimationId.value = null
+      activeAnimationId.value = null
+    }
+    return
+  }
   const currentIndex = animationIndexes[item.id] || 0
   animationIndexes[item.id] = (currentIndex + 1) % item.videos.length
-  playActiveAnimation(item)
+  nextTick(() => playActiveAnimation(item))
 }
-
-// if your dance images are inline in the template, you can define them here:
-const danceImageUrls = [
-  '/dance/love-letters.jpg',
-  '/dance/untitled.jpg',
-  '/dance/untitled-2026.jpg',
-]
-
-// collect all URLs into one array
-const allImageUrls = computed(() => {
-  const research = (researchItems?.value || [])
-    .map(i => i.image)
-  const animation = (animationItems?.value || [])
-    .map(i => i.thumbnail || i.image)
-  const dance = danceImageUrls
-
-  return [...research, ...animation, ...dance].filter(Boolean)
-})
 
 const mouseEnabled = computed(() => activeOverlay.value === null)
 
@@ -831,6 +902,12 @@ const bodyTextWeight = ref(400)
 const tabPaperOpacity = ref(0.98)
 const tabPaperTint = reactive({ h: 45, s: 0.073059, v: 0.858824 })
 const frontPagePaperTint = reactive({ h: 49.655, s: 0.113725, v: 1 })
+const imageLoaderBackgroundA = reactive({ h: 45, s: 0.03, v: 1 })
+const imageLoaderBackgroundB = reactive({ h: 49, s: 0.04, v: 1 })
+const imageLoaderRingColor = reactive({ h: 108, s: 1, v: 0.54 })
+const imageLoaderThickness = ref(2)
+const imageLoaderSize = ref(90)
+const imageLoaderSpeed = ref(2)
 const typographyViewportScale = ref(1)
 const designScale = ref(1)
 const layoutViewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
@@ -882,6 +959,12 @@ const typographyStyle = computed(() => ({
   '--tab-paper-tint': hsvToCss(tabPaperTint.h, tabPaperTint.s, tabPaperTint.v),
   '--tab-paper-scroll-y': `${-tabPaperScrollY.value}px`,
   '--front-page-paper-tint': hsvToCss(frontPagePaperTint.h, frontPagePaperTint.s, frontPagePaperTint.v),
+  '--image-loader-background-a': hsvToCss(imageLoaderBackgroundA.h, imageLoaderBackgroundA.s, imageLoaderBackgroundA.v),
+  '--image-loader-background-b': hsvToCss(imageLoaderBackgroundB.h, imageLoaderBackgroundB.s, imageLoaderBackgroundB.v),
+  '--image-loader-ring-color': hsvToCss(imageLoaderRingColor.h, imageLoaderRingColor.s, imageLoaderRingColor.v),
+  '--image-loader-ring-thickness': `${imageLoaderThickness.value}px`,
+  '--image-loader-ring-size': `${imageLoaderSize.value}px`,
+  '--image-loader-speed': `${imageLoaderSpeed.value}s`,
 }))
 watch(
   [
@@ -922,7 +1005,6 @@ watch(selectedFont, async (fontName) => {
     if (requestId === fontLoadRequest) fontLoading.value = false
   }
 })
-
 
 const container = ref(null)
 const hasPointer = ref(false)
@@ -1011,11 +1093,26 @@ const titleEffectColor = reactive({ h: 283, s: 0.26, v: 1.00 })
 const subtitleEffectColor = reactive({ h: 283, s: 0.26, v: 1.00 })
 const socialEffectColor = reactive({ h: 283, s: 0.26, v: 1.00 })
 
+watch(
+  () => [
+    colorA.h, colorA.s, colorA.v, colorB.h, colorB.s, colorB.v,
+    navigationEffectColor.h, navigationEffectColor.s, navigationEffectColor.v,
+    biographyEffectColor.h, biographyEffectColor.s, biographyEffectColor.v,
+    titleEffectColor.h, titleEffectColor.s, titleEffectColor.v,
+    subtitleEffectColor.h, subtitleEffectColor.s, subtitleEffectColor.v,
+    socialEffectColor.h, socialEffectColor.s, socialEffectColor.v,
+    colorLayoutMode.value,
+  ],
+  syncRenderUniforms,
+  { flush: 'post' },
+)
+
 const sizeMin = ref(27)
 const sizeMax = ref(80)
 const viewportScale = ref(1)
-const effectiveSizeMin = computed(() => sizeMin.value * viewportScale.value)
-const effectiveSizeMax = computed(() => sizeMax.value * viewportScale.value)
+const mobileTriangleBoost = computed(() => layoutViewportWidth.value <= 767 ? 1.5 : 1)
+const effectiveSizeMin = computed(() => sizeMin.value * viewportScale.value * mobileTriangleBoost.value)
+const effectiveSizeMax = computed(() => sizeMax.value * viewportScale.value * mobileTriangleBoost.value)
 const pathSpeed = ref(160)
 const effectivePathSpeed = computed(() => pathSpeed.value * viewportScale.value)
 const pathPointCount = ref(14)
@@ -1036,6 +1133,8 @@ const cohesionWeight = ref(0.3)
 const flockMinSpeed = ref(55)
 const flockMaxSpeed = ref(285)
 const maxSteer = ref(150)
+const flightHeightMin = ref(25)
+const flightHeightMax = ref(140)
 
 function clamp(min, val, max) {
   return Math.min(Math.max(val, min), max)
@@ -1061,9 +1160,33 @@ let sharedSpline = null
 let flockStates = []
 let targetOrbitAngle = -Math.PI * 0.15
 let animationId = null
+let resizeFrame = null
+let lastRenderedAt = 0
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 let mouse = new THREE.Vector2(0, 0)
 let bounds = new THREE.Vector2(1, 1)
 let clock
+const frameMatrix = new THREE.Matrix4()
+const framePosition = new THREE.Vector3()
+const frameRotation = new THREE.Quaternion()
+const frameScale = new THREE.Vector3()
+const frameAxis = new THREE.Vector3(0, 0, 1)
+let biographyObstacle = null
+let cachedContainerRect = null
+let positionSnapshot = new Float32Array(0)
+let velocitySnapshot = new Float32Array(0)
+
+function refreshBiographyObstacle() {
+  const containerRect = container.value?.getBoundingClientRect()
+  cachedContainerRect = containerRect || cachedContainerRect
+  const biographyRect = document.querySelector('.landing-intro')?.getBoundingClientRect()
+  biographyObstacle = containerRect && biographyRect ? {
+    centerX: biographyRect.left - containerRect.left + biographyRect.width / 2 - containerRect.width / 2,
+    centerY: -(biographyRect.top - containerRect.top + biographyRect.height / 2 - containerRect.height / 2),
+    halfWidth: biographyRect.width / 2,
+    halfHeight: biographyRect.height / 2,
+  } : null
+}
 
 // extra for text overlay
 let simRenderTarget   // offscreen render of squares
@@ -1074,6 +1197,16 @@ let resizeObserver
 let textFontReady = false
 let resumeFrame = null
 let contextRecoveryTimer = null
+
+function getRenderPixelRatio() {
+  const qualityCap = reducedMotionQuery.matches ? 1 : 1.5
+  return Math.min(window.devicePixelRatio || 1, qualityCap)
+}
+
+function getRenderTargetSamples() {
+  if (reducedMotionQuery.matches) return 0
+  return 2
+}
 function createTextTexture(
   text = "HELLO\nWORLD",
   width = 1024,
@@ -1192,30 +1325,6 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
         }
       })
 
-      const menuName = element.dataset?.menu
-      if (menuName && (hoveredMenu.value === menuName || activeOverlay.value === menuName)) {
-        const rect = element.getBoundingClientRect()
-        let underlineY = rect.bottom - containerRect.top - 1
-
-        if (window.innerWidth <= 767) {
-          const textNode = Array.from(element.childNodes).find(
-            node => node.nodeType === Node.TEXT_NODE && node.textContent.trim(),
-          )
-          if (textNode) {
-            const textRange = document.createRange()
-            textRange.selectNodeContents(textNode)
-            const textRect = textRange.getBoundingClientRect()
-            underlineY = textRect.bottom - containerRect.top + 1
-          }
-        }
-
-        ctx.fillRect(
-          rect.left - containerRect.left,
-          underlineY,
-          rect.width,
-          1,
-        )
-      }
     })
 
     document.querySelectorAll('.landing-socials a').forEach((link) => {
@@ -1267,6 +1376,7 @@ function loadSvgAsTexture(img, targetWidth = 1024, targetHeight = 512) {
 
   postMesh.position.set(0, 0, 5)
   postScene.add(postMesh)
+  syncRenderUniforms()
 }
 
 function createPostMaterial(simTex, textTex, screenSize) {
@@ -1457,29 +1567,11 @@ function createPostMaterial(simTex, textTex, screenSize) {
   })
 }
 
-onMounted(async () => {
+onMounted(() => {
   updateDesignScale()
 
-  // 1) preload images (network/cache)
-  allImageUrls.value.forEach(src => {
-    const img = new Image()
-    img.src = src
-  })
-
-  // 2) prewarm each tab once (layout/paint)
-  const original = activeOverlay.value
-  const tabs = ['research', 'animation', 'dance', 'me']
-
-  for (const t of tabs) {
-    activeOverlay.value = t
-    await nextTick()   // let the browser actually render it once
-  }
-
-  // 3) restore original state (no overlay open)
-  activeOverlay.value = original || null
-  isPrewarming.value = false
-  
   initThree()
+  refreshBiographyObstacle()
   buildSimulation(squareRes.value)
   loadLeafAtlasTexture().then(texture => {
     leafAtlasTexture = texture
@@ -1490,6 +1582,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   cancelAnimationFrame(animationId)
+  cancelAnimationFrame(resizeFrame)
   cancelAnimationFrame(resumeFrame)
   clearTimeout(contextRecoveryTimer)
   resizeObserver?.disconnect()
@@ -1497,6 +1590,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('pageshow', resumeAfterExternalNavigation)
   window.removeEventListener('focus', resumeAfterExternalNavigation)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
+  reducedMotionQuery.removeEventListener('change', onResize)
   window.removeEventListener('pointermove', moveControlPanel)
   window.removeEventListener('pointerup', endControlPanelDrag)
   window.removeEventListener('pointercancel', endControlPanelDrag)
@@ -1504,6 +1598,13 @@ onBeforeUnmount(() => {
   renderer?.domElement.removeEventListener('webglcontextrestored', resumeAfterExternalNavigation)
   window.removeEventListener('pointermove', onPointerMove)
   window.removeEventListener('keydown', onKeyDown)
+  renderMesh?.geometry.dispose()
+  renderMesh?.material.dispose()
+  postMesh?.geometry.dispose()
+  postMesh?.material.dispose()
+  textTexture?.dispose()
+  leafAtlasTexture?.dispose()
+  simRenderTarget?.dispose()
   renderer?.dispose()
 })
 
@@ -1518,11 +1619,11 @@ function initThree() {
   const el = container.value
   const w = Math.max(1, el.clientWidth || window.innerWidth)
   const h = Math.max(1, el.clientHeight || window.innerHeight)
-  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const dpr = getRenderPixelRatio()
   viewportScale.value = clamp(0.25, Math.min(w / 1280, h / 800), 1)
   typographyViewportScale.value = clamp(0.45, w / 900, 1)
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' })
   renderer.setPixelRatio(dpr)
   renderer.setSize(w, h)
   renderer.setClearColor(0xfbfdf9, 1)
@@ -1547,7 +1648,7 @@ function initThree() {
       stencilBuffer: false,
     }
   )
-  simRenderTarget.samples = 4
+  simRenderTarget.samples = getRenderTargetSamples()
 
   // Only create the title texture after the selected face is available. This
   // prevents the canvas from briefly drawing the title in a fallback font.
@@ -1565,6 +1666,7 @@ function initThree() {
   window.addEventListener('pageshow', resumeAfterExternalNavigation)
   window.addEventListener('focus', resumeAfterExternalNavigation)
   document.addEventListener('visibilitychange', handleVisibilityChange)
+  reducedMotionQuery.addEventListener('change', onResize)
   resizeObserver = new ResizeObserver(onResize)
   resizeObserver.observe(el)
   window.addEventListener('pointermove', onPointerMove)
@@ -1572,7 +1674,12 @@ function initThree() {
 }
 
 function handleVisibilityChange() {
-  if (document.visibilityState === 'visible') resumeAfterExternalNavigation()
+  if (document.visibilityState === 'hidden') {
+    cancelAnimationFrame(animationId)
+    animationId = null
+    return
+  }
+  resumeAfterExternalNavigation()
 }
 
 function handleWebGLContextLost() {
@@ -1889,6 +1996,7 @@ function buildSimulation(res) {
 
   scene.add(instanced)
   renderMesh = instanced
+  syncRenderUniforms()
   splineStates = []
   sharedSpline = null
   flockStates = seeds.map((seed, index) => createFlockState(seed, index, count))
@@ -2086,92 +2194,12 @@ let leafAtlasTexture = new THREE.DataTexture(new Uint8Array([62, 143, 25, 255]),
 leafAtlasTexture.needsUpdate = true
 
 async function loadLeafAtlasTexture() {
-  const sources = [
-    '/design/image-from-rawpixel-id-13095024-png.png',
-    '/design/image-from-rawpixel-id-13095633-png.png',
-    '/design/image-from-rawpixel-id-13096138-png.png',
-    '/design/image-from-rawpixel-id-14061500-png.png',
-  ]
-  const images = await Promise.all(sources.map(src => new Promise((resolve, reject) => {
-    const image = new Image()
-    image.onload = () => resolve(image)
-    image.onerror = reject
-    image.src = src
-  })))
-  const cell = 1024
-  const atlas = document.createElement('canvas')
-  atlas.width = cell * 2
-  atlas.height = cell * 2
-  const ctx = atlas.getContext('2d')
-  images.forEach((image, index) => {
-    const x = (index % 2) * cell
-    const y = Math.floor(index / 2) * cell
-    const crop = findLargestLeafTriangleCrop(image)
-    ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, x, y, cell, cell)
-  })
-  const texture = new THREE.CanvasTexture(atlas)
+  const texture = await new THREE.TextureLoader().loadAsync('/design/leaf-atlas.webp')
   texture.colorSpace = THREE.SRGBColorSpace
   texture.minFilter = THREE.LinearMipmapLinearFilter
   texture.magFilter = THREE.LinearFilter
   texture.generateMipmaps = true
   return texture
-}
-
-function findLargestLeafTriangleCrop(image) {
-  const probe = document.createElement('canvas')
-  probe.width = image.width
-  probe.height = image.height
-  const ctx = probe.getContext('2d', { willReadFrequently: true })
-  ctx.drawImage(image, 0, 0)
-  const alpha = ctx.getImageData(0, 0, image.width, image.height).data
-  const center = Math.round(image.width / 2)
-  const rowInset = Math.max(2, Math.round(image.width * 0.012))
-  const halfWidths = new Float32Array(image.height)
-
-  for (let y = 0; y < image.height; y++) {
-    let left = center
-    let right = center
-    while (left > 0 && alpha[(y * image.width + left) * 4 + 3] >= 220) left--
-    while (right < image.width - 1 && alpha[(y * image.width + right) * 4 + 3] >= 220) right++
-    halfWidths[y] = Math.max(0, Math.min(center - left, right - center) - rowInset)
-  }
-
-  const firstLeafRow = halfWidths.findIndex(width => width > rowInset)
-  let best = { score: 0, top: Math.max(0, firstLeafRow), bottom: Math.round(image.height * 0.72), width: image.width * 0.5 }
-  const topStart = Math.max(0, firstLeafRow)
-  const topEnd = Math.min(Math.round(image.height * 0.18), topStart + Math.round(image.height * 0.12))
-  const bottomStart = Math.round(image.height * 0.5)
-  const bottomEnd = Math.round(image.height * 0.82)
-
-  for (let top = topStart; top <= topEnd; top += 3) {
-    for (let bottom = bottomStart; bottom <= bottomEnd; bottom += 3) {
-      const height = bottom - top
-      if (height <= 0) continue
-      let maxCropWidth = Infinity
-      let valid = true
-      for (let y = top + 2; y <= bottom; y += 2) {
-        const t = (y - top) / height
-        if (t < 0.035) continue
-        const available = halfWidths[y]
-        if (available <= 0) { valid = false; break }
-        maxCropWidth = Math.min(maxCropWidth, (available * 2) / t)
-      }
-      if (!valid || !Number.isFinite(maxCropWidth)) continue
-      maxCropWidth = Math.min(maxCropWidth, image.width * 0.96)
-      const score = maxCropWidth * height
-      if (score > best.score) best = { score, top, bottom, width: maxCropWidth }
-    }
-  }
-
-  const safety = 0.94
-  const width = Math.max(8, best.width * safety)
-  const verticalInset = Math.max(1, (best.bottom - best.top) * 0.012)
-  return {
-    x: center - width / 2,
-    y: best.top + verticalInset,
-    width,
-    height: Math.max(8, best.bottom - best.top - verticalInset * 2),
-  }
 }
 
 function limitVector(vector, maximum) {
@@ -2197,18 +2225,26 @@ function updateFlock(dt, matrix, position, rotation, scale, axis) {
   const minSpeed = flockMinSpeed.value * viewportScale.value
   const maxSpeed = Math.max(minSpeed, flockMaxSpeed.value * viewportScale.value)
   const steeringLimit = maxSteer.value * viewportScale.value
-  const positions = flockStates.map(state => state.position.clone())
-  const velocities = flockStates.map(state => state.velocity.clone())
-  const containerRect = container.value?.getBoundingClientRect()
-  const biographyRect = document.querySelector('.landing-intro')?.getBoundingClientRect()
-  const biographyObstacle = containerRect && biographyRect ? {
-    center: new THREE.Vector2(
-      biographyRect.left - containerRect.left + biographyRect.width / 2 - containerRect.width / 2,
-      -(biographyRect.top - containerRect.top + biographyRect.height / 2 - containerRect.height / 2),
-    ),
-    halfWidth: biographyRect.width / 2,
-    halfHeight: biographyRect.height / 2,
-  } : null
+  const count = flockStates.length
+  if (positionSnapshot.length !== count * 2) {
+    positionSnapshot = new Float32Array(count * 2)
+    velocitySnapshot = new Float32Array(count * 2)
+  }
+  const grid = new Map()
+  const cellSize = Math.max(1, neighborDistance)
+  flockStates.forEach((state, index) => {
+    const offset = index * 2
+    positionSnapshot[offset] = state.position.x
+    positionSnapshot[offset + 1] = state.position.y
+    velocitySnapshot[offset] = state.velocity.x
+    velocitySnapshot[offset + 1] = state.velocity.y
+    const cellX = Math.floor(state.position.x / cellSize)
+    const cellY = Math.floor(state.position.y / cellSize)
+    const key = `${cellX},${cellY}`
+    const cell = grid.get(key)
+    if (cell) cell.push(index)
+    else grid.set(key, [index])
+  })
 
   flockStates.forEach((state, index) => {
     const alignment = new THREE.Vector2()
@@ -2216,14 +2252,29 @@ function updateFlock(dt, matrix, position, rotation, scale, axis) {
     const separation = new THREE.Vector2()
     let neighbors = 0
 
-    flockStates.forEach((_, otherIndex) => {
+    const snapshotOffset = index * 2
+    const snapshotPosition = new THREE.Vector2(positionSnapshot[snapshotOffset], positionSnapshot[snapshotOffset + 1])
+    const snapshotVelocity = new THREE.Vector2(velocitySnapshot[snapshotOffset], velocitySnapshot[snapshotOffset + 1])
+    const cellX = Math.floor(snapshotPosition.x / cellSize)
+    const cellY = Math.floor(snapshotPosition.y / cellSize)
+    const candidates = []
+    for (let gridY = cellY - 1; gridY <= cellY + 1; gridY++) {
+      for (let gridX = cellX - 1; gridX <= cellX + 1; gridX++) {
+        const cell = grid.get(`${gridX},${gridY}`)
+        if (cell) candidates.push(...cell)
+      }
+    }
+    candidates.forEach((otherIndex) => {
       if (index === otherIndex) return
-      const offset = positions[index].clone().sub(positions[otherIndex])
+      const otherOffset = otherIndex * 2
+      const otherPosition = new THREE.Vector2(positionSnapshot[otherOffset], positionSnapshot[otherOffset + 1])
+      const offset = snapshotPosition.clone().sub(otherPosition)
       const distance = offset.length()
       if (distance <= 0 || distance > neighborDistance) return
       neighbors++
-      alignment.add(velocities[otherIndex])
-      cohesion.add(positions[otherIndex])
+      alignment.x += velocitySnapshot[otherOffset]
+      alignment.y += velocitySnapshot[otherOffset + 1]
+      cohesion.add(otherPosition)
       const separationDistance = Math.max(
         neighborDistance * 0.42,
         (state.size + flockStates[otherIndex].size) * 0.72,
@@ -2237,21 +2288,21 @@ function updateFlock(dt, matrix, position, rotation, scale, axis) {
     const acceleration = new THREE.Vector2()
     if (neighbors) {
       alignment.multiplyScalar(1 / neighbors)
-      cohesion.multiplyScalar(1 / neighbors).sub(positions[index])
-      acceleration.addScaledVector(steerToward(velocities[index], alignment, maxSpeed, steeringLimit), alignmentWeight.value)
-      acceleration.addScaledVector(steerToward(velocities[index], cohesion, maxSpeed, steeringLimit), cohesionWeight.value)
-      acceleration.addScaledVector(steerToward(velocities[index], separation, maxSpeed, steeringLimit), separationWeight.value)
+      cohesion.multiplyScalar(1 / neighbors).sub(snapshotPosition)
+      acceleration.addScaledVector(steerToward(snapshotVelocity, alignment, maxSpeed, steeringLimit), alignmentWeight.value)
+      acceleration.addScaledVector(steerToward(snapshotVelocity, cohesion, maxSpeed, steeringLimit), cohesionWeight.value)
+      acceleration.addScaledVector(steerToward(snapshotVelocity, separation, maxSpeed, steeringLimit), separationWeight.value)
     }
 
-    const toTarget = orbitTarget.clone().sub(positions[index])
-    acceleration.addScaledVector(steerToward(velocities[index], toTarget, maxSpeed, steeringLimit), targetWeight.value)
+    const toTarget = orbitTarget.clone().sub(snapshotPosition)
+    acceleration.addScaledVector(steerToward(snapshotVelocity, toTarget, maxSpeed, steeringLimit), targetWeight.value)
 
     if (biographyObstacle && biographyAvoidanceWeight.value > 0) {
       const clearance = biographyClearance.value * viewportScale.value + state.size * 0.55
       const halfWidth = biographyObstacle.halfWidth + clearance
       const halfHeight = biographyObstacle.halfHeight + clearance
-      const localX = positions[index].x - biographyObstacle.center.x
-      const localY = positions[index].y - biographyObstacle.center.y
+      const localX = snapshotPosition.x - biographyObstacle.centerX
+      const localY = snapshotPosition.y - biographyObstacle.centerY
       const remainingX = halfWidth - Math.abs(localX)
       const remainingY = halfHeight - Math.abs(localY)
       if (remainingX > 0 && remainingY > 0) {
@@ -2259,7 +2310,7 @@ function updateFlock(dt, matrix, position, rotation, scale, axis) {
           ? new THREE.Vector2(localX < 0 ? -1 : 1, 0)
           : new THREE.Vector2(0, localY < 0 ? -1 : 1)
         const depth = Math.min(1, Math.min(remainingX, remainingY) / Math.max(1, clearance))
-        const avoidance = steerToward(velocities[index], escape, maxSpeed, steeringLimit)
+        const avoidance = steerToward(snapshotVelocity, escape, maxSpeed, steeringLimit)
         acceleration.addScaledVector(avoidance, biographyAvoidanceWeight.value * (0.65 + depth))
       }
     }
@@ -2284,7 +2335,10 @@ function updateFlock(dt, matrix, position, rotation, scale, axis) {
     const angleDelta = Math.atan2(Math.sin(targetAngle - state.angle), Math.cos(targetAngle - state.angle))
     state.angle += angleDelta * (1 - Math.exp(-6 * dt))
 
-    position.set(state.position.x, state.position.y, 0)
+    const flightHeight = THREE.MathUtils.lerp(flightHeightMin.value, flightHeightMax.value, state.seed)
+    const middleHeight = (flightHeightMin.value + flightHeightMax.value) * 0.5
+    const heightOffset = (flightHeight - middleHeight) * 0.35 * viewportScale.value
+    position.set(state.position.x, state.position.y + heightOffset, 0)
     rotation.setFromAxisAngle(axis, state.angle)
     scale.set(state.size, state.size, 1)
     matrix.compose(position, rotation, scale)
@@ -2293,15 +2347,25 @@ function updateFlock(dt, matrix, position, rotation, scale, axis) {
   renderMesh.instanceMatrix.needsUpdate = true
 }
 
-function animate() {
+function animate(timestamp = performance.now()) {
+  animationId = null
+  if (document.visibilityState === 'hidden' || !renderer) return
+
+  const idleScene = animationPaused.value || activeOverlay.value !== null
+  const frameInterval = idleScene ? 100 : (reducedMotionQuery.matches ? 1000 / 30 : 0)
+  if (frameInterval && timestamp - lastRenderedAt < frameInterval) {
+    animationId = requestAnimationFrame(animate)
+    return
+  }
+  lastRenderedAt = timestamp
   const dt = Math.min(clock.getDelta(), 0.05)
 
   if (renderMesh && flockStates.length) {
-    const matrix = new THREE.Matrix4()
-    const position = new THREE.Vector3()
-    const rotation = new THREE.Quaternion()
-    const scale = new THREE.Vector3()
-    const axis = new THREE.Vector3(0, 0, 1)
+    const matrix = frameMatrix
+    const position = framePosition
+    const rotation = frameRotation
+    const scale = frameScale
+    const axis = frameAxis
 
     if (colorLayoutMode.value) {
       const viewWidth = bounds.x * 2
@@ -2331,30 +2395,13 @@ function animate() {
       updateFlock(dt, matrix, position, rotation, scale, axis)
     }
 
-    const ca = hsvToRgb(colorA.h, colorA.s, colorA.v)
-    const cb = hsvToRgb(colorB.h, colorB.s, colorB.v)
-    renderMesh.material.uniforms.uColorA.value.set(ca.r, ca.g, ca.b)
-    renderMesh.material.uniforms.uColorB.value.set(cb.r, cb.g, cb.b)
-    renderMesh.material.uniforms.uColorLayout.value = colorLayoutMode.value ? 1 : 0
-  }
-
-  if (postMesh) {
-    const bgA = new THREE.Vector3(colorA.h / 360, colorA.s, colorA.v)
-    const bgB = new THREE.Vector3(colorB.h / 360, colorB.s, colorB.v)
-
-    postMesh.material.uniforms.uBgHSV_A.value.copy(bgA)
-    postMesh.material.uniforms.uBgHSV_B.value.copy(bgB)
-    postMesh.material.uniforms.uNavigationEffectHSV.value.set(navigationEffectColor.h / 360, navigationEffectColor.s, navigationEffectColor.v)
-    postMesh.material.uniforms.uBiographyEffectHSV.value.set(biographyEffectColor.h / 360, biographyEffectColor.s, biographyEffectColor.v)
-    postMesh.material.uniforms.uTitleEffectHSV.value.set(titleEffectColor.h / 360, titleEffectColor.s, titleEffectColor.v)
-    postMesh.material.uniforms.uSubtitleEffectHSV.value.set(subtitleEffectColor.h / 360, subtitleEffectColor.s, subtitleEffectColor.v)
-    postMesh.material.uniforms.uSocialEffectHSV.value.set(socialEffectColor.h / 360, socialEffectColor.s, socialEffectColor.v)
   }
 
   // PASS 1: render squares to offscreen
   renderer.setRenderTarget(simRenderTarget)
   renderer.clear()
   renderer.render(scene, camera)
+
 
   // PASS 2: composite the reactive text/icon colors over the textured leaves.
   renderer.setRenderTarget(null)
@@ -2364,17 +2411,44 @@ function animate() {
   animationId = requestAnimationFrame(animate)
 }
 
+function syncRenderUniforms() {
+  if (renderMesh) {
+    const ca = hsvToRgb(colorA.h, colorA.s, colorA.v)
+    const cb = hsvToRgb(colorB.h, colorB.s, colorB.v)
+    renderMesh.material.uniforms.uColorA.value.set(ca.r, ca.g, ca.b)
+    renderMesh.material.uniforms.uColorB.value.set(cb.r, cb.g, cb.b)
+    renderMesh.material.uniforms.uColorLayout.value = colorLayoutMode.value ? 1 : 0
+  }
+
+  if (postMesh) {
+    postMesh.material.uniforms.uBgHSV_A.value.set(colorA.h / 360, colorA.s, colorA.v)
+    postMesh.material.uniforms.uBgHSV_B.value.set(colorB.h / 360, colorB.s, colorB.v)
+    postMesh.material.uniforms.uNavigationEffectHSV.value.set(navigationEffectColor.h / 360, navigationEffectColor.s, navigationEffectColor.v)
+    postMesh.material.uniforms.uBiographyEffectHSV.value.set(biographyEffectColor.h / 360, biographyEffectColor.s, biographyEffectColor.v)
+    postMesh.material.uniforms.uTitleEffectHSV.value.set(titleEffectColor.h / 360, titleEffectColor.s, titleEffectColor.v)
+    postMesh.material.uniforms.uSubtitleEffectHSV.value.set(subtitleEffectColor.h / 360, subtitleEffectColor.s, subtitleEffectColor.v)
+    postMesh.material.uniforms.uSocialEffectHSV.value.set(socialEffectColor.h / 360, socialEffectColor.s, socialEffectColor.v)
+  }
+}
+
 
 function onResize() {
+  cancelAnimationFrame(resizeFrame)
+  resizeFrame = requestAnimationFrame(performResize)
+}
+
+function performResize() {
+  resizeFrame = null
   updateDesignScale()
   if (!container.value || !renderer || !camera) return
   const w = Math.max(1, container.value.clientWidth || window.innerWidth)
   const h = Math.max(1, container.value.clientHeight || window.innerHeight)
-  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const dpr = getRenderPixelRatio()
 
   renderer.setPixelRatio(dpr)
   renderer.setSize(w, h)
   simRenderTarget?.setSize(Math.round(w * dpr), Math.round(h * dpr))
+  if (simRenderTarget) simRenderTarget.samples = getRenderTargetSamples()
   camera.left = -w / 2
   camera.right = w / 2
   camera.top = h / 2
@@ -2382,6 +2456,7 @@ function onResize() {
   camera.updateProjectionMatrix()
 
   bounds.set(w / 2, h / 2)
+  refreshBiographyObstacle()
   viewportScale.value = clamp(0.25, Math.min(w / 1280, h / 800), 1)
   typographyViewportScale.value = clamp(0.45, w / 900, 1)
   flockStates.forEach(state => {
@@ -2408,7 +2483,7 @@ function updateDesignScale() {
 function onPointerMove(e) {
   if (!container.value) return
   if (!mouseEnabled.value) return  // ← stops mouse effects when overlay is open
-  const rect = container.value.getBoundingClientRect()
+  const rect = cachedContainerRect || container.value.getBoundingClientRect()
   const x = e.clientX - rect.left
   const y = e.clientY - rect.top
   const worldX = x - rect.width / 2
@@ -2435,6 +2510,14 @@ function exportSettings() {
     frontPage: {
       paperTint: { ...frontPagePaperTint },
     },
+    imageLoading: {
+      backgroundA: { ...imageLoaderBackgroundA },
+      backgroundB: { ...imageLoaderBackgroundB },
+      circleColor: { ...imageLoaderRingColor },
+      circleThickness: imageLoaderThickness.value,
+      circleSize: imageLoaderSize.value,
+      speed: imageLoaderSpeed.value,
+    },
     simulation: {
       triangleGrid: squareRes.value,
       targetOrbitSpeed: targetOrbitSpeed.value,
@@ -2452,6 +2535,8 @@ function exportSettings() {
       maximumSteering: maxSteer.value,
       minSize: sizeMin.value,
       maxSize: sizeMax.value,
+      flightHeightMin: flightHeightMin.value,
+      flightHeightMax: flightHeightMax.value,
     },
     colors: {
       triangleA: { ...colorA },
@@ -2527,6 +2612,12 @@ watch(flockMinSpeed, (value) => {
 })
 watch(flockMaxSpeed, (value) => {
   if (value < flockMinSpeed.value) flockMinSpeed.value = value
+})
+watch(flightHeightMin, (value) => {
+  if (value > flightHeightMax.value) flightHeightMax.value = value
+})
+watch(flightHeightMax, (value) => {
+  if (value < flightHeightMin.value) flightHeightMin.value = value
 })
 </script>
 
@@ -2831,6 +2922,7 @@ watch(flockMaxSpeed, (value) => {
   font-family: var(--site-font, "Space Grotesk"), sans-serif;
   font-weight: var(--navigation-text-weight, 500);
   letter-spacing: -0.035em;
+  transition: border-bottom-color 0.18s ease;
 }
 
 .color-picker-grid {
@@ -2874,11 +2966,17 @@ watch(flockMaxSpeed, (value) => {
   color: #173b2b;
 }
 
-.app.menu-mask-ready .top-bar button,
-.app.menu-mask-ready .top-bar button:hover,
-.app.menu-mask-ready .top-bar button.active {
+.app.menu-mask-ready .top-bar button {
   border-bottom-color: transparent;
   color: transparent;
+}
+
+.app.menu-mask-ready .top-bar button:hover {
+  border-bottom-color: rgba(35, 72, 57, 0.48);
+}
+
+.app.menu-mask-ready .top-bar button.active {
+  border-bottom-color: #173b2b;
 }
 
 .top-bar button:focus-visible {
@@ -3077,13 +3175,20 @@ watch(flockMaxSpeed, (value) => {
   transition: opacity 0.2s ease;
 }
 
+.research-item,
+.animation-item,
+.dance-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 320px 240px;
+}
+
 .overlay::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
   background-color: var(--tab-paper-tint, #fff);
-  background-image: url('/paper-texture-white.png');
+  background-image: url('/paper-texture-white.webp');
   background-position: center var(--tab-paper-scroll-y, 0px);
   background-size: cover;
   background-repeat: repeat-y;
@@ -3283,6 +3388,7 @@ watch(flockMaxSpeed, (value) => {
 
 .youtube-hover-icon {
   position: absolute;
+  z-index: 3;
   right: clamp(0.45rem, 1vw, 0.7rem);
   bottom: clamp(0.45rem, 1vw, 0.7rem);
   display: flex;
@@ -3461,7 +3567,7 @@ watch(flockMaxSpeed, (value) => {
 
 /* Botanical landing page */
 .canvas-container { position: fixed; inset: 0; z-index: 0; display: block; }
-.canvas-container::after { content: ''; position: absolute; inset: 0; z-index: 1; background-color: var(--front-page-paper-tint, #fff); background-image: url('/paper-texture-white.png'); background-position: center; background-size: cover; background-repeat: repeat; background-blend-mode: multiply; opacity: .82; mix-blend-mode: multiply; pointer-events: none; }
+.canvas-container::after { content: ''; position: absolute; inset: 0; z-index: 1; background-color: var(--front-page-paper-tint, #fff); background-image: url('/paper-texture-white.webp'); background-position: center; background-size: cover; background-repeat: repeat; background-blend-mode: multiply; opacity: .82; mix-blend-mode: multiply; pointer-events: none; }
 .app { --design-scale: 1; width: 100vw; height: 100dvh; min-height: 0; overflow: hidden; color: #670000; background: #fbfdf9; }
 .landing-page { position: absolute; z-index: 1; top: 50%; left: 50%; width: 1440px; height: 1000px; min-height: 0; overflow: hidden; pointer-events: none; transform: translate(-50%, -50%) scale(var(--design-scale)); transform-origin: center; }
 .landing-intro { position: absolute; z-index: 2; top: 260px; left: 485px; width: 840px; height: 235px; box-sizing: border-box; color: #000; opacity: .71; font-family: "Marcellus", "Marcellus Local", serif; font-size: 18px; font-weight: 400; line-height: 22px; letter-spacing: 0; text-align: right; }
@@ -3545,10 +3651,17 @@ watch(flockMaxSpeed, (value) => {
   }
 
   .top-bar button {
-    height: 34px;
+    height: 21px;
     font-size: clamp(11px, 3.2vw, 14px);
-    line-height: 34px;
+    line-height: 21px;
     border-bottom-color: transparent;
+  }
+
+  .top-bar button:hover,
+  .top-bar button.active,
+  .app.menu-mask-ready .top-bar button:hover,
+  .app.menu-mask-ready .top-bar button.active {
+    border-bottom-color: #670000;
   }
 
   .landing-intro {
@@ -3623,6 +3736,87 @@ watch(flockMaxSpeed, (value) => {
   .landing-profile-copy h1 { top: 68%; }
   .landing-profile-copy > p { top: 73%; }
   .landing-socials { top: 78%; }
+}
+
+.image-load-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--image-loader-background-a, #f0eee7), var(--image-loader-background-b, #fffdf5));
+}
+
+.image-loader-lottie {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(var(--image-loader-ring-size, 90px), 55%);
+  aspect-ratio: 1;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.image-loader-lottie i {
+  position: absolute;
+  left: 1.15%;
+  top: 1.15%;
+  width: 97.7%;
+  height: 97.7%;
+  border: var(--image-loader-ring-thickness, 2px) solid var(--image-loader-ring-color, #1dcd3a);
+  border-radius: 50%;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: scale(0.613);
+  animation: lottiefiles-image-loading var(--image-loader-speed, 2s) cubic-bezier(.322, 0, .243, 1) infinite;
+}
+
+.image-loader-lottie i:nth-child(2) {
+  animation-delay: calc(var(--image-loader-speed, 2s) * 0.2915);
+}
+
+.image-loader-preview {
+  min-height: 150px;
+  margin: 0.65rem 0 0.8rem;
+  border: 1px solid rgba(35, 72, 57, 0.16);
+  border-radius: 0.7rem;
+}
+
+.image-load-shell.is-loaded .image-loader-lottie {
+  opacity: 0;
+}
+
+.image-load-shell.is-loaded .image-loader-lottie i {
+  animation-play-state: paused;
+}
+
+.image-load-shell > img {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
+  color: transparent;
+  font-size: 0;
+  transition: opacity 0.42s ease;
+}
+
+.image-load-shell > img.is-loaded:not(.is-video-playing) {
+  opacity: 1;
+}
+
+.image-load-shell > img.is-video-playing {
+  opacity: 0;
+}
+
+@keyframes lottiefiles-image-loading {
+  0% { opacity: 1; transform: scale(0.613); }
+  25% { opacity: 1; }
+  50% { opacity: 0; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-loader-lottie i { animation: none; opacity: 0.45; transform: scale(0.76); }
+  .image-loader-lottie i:nth-child(2) { opacity: 0; }
 }
 
 
