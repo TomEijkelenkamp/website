@@ -3099,6 +3099,8 @@ watch(flightHeightMax, (value) => {
   position: absolute;
   inset: 0;
   opacity: 0;
+  /* Keep the card's hover target stable when the video layer appears. */
+  pointer-events: none;
 }
 
 .animation-thumb video.is-playing {
