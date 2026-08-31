@@ -305,6 +305,34 @@
         </div>
       </section>
 
+      <section class="menu-bar-settings">
+        <strong>Menu bar</strong>
+        <div class="two-columns">
+          <div>
+            <span>Desktop</span>
+            <label>
+              Height: {{ desktopMenuBarHeight }} px
+              <input type="range" min="40" max="140" step="1" v-model.number="desktopMenuBarHeight" />
+            </label>
+            <label>
+              Text height: {{ desktopMenuTextPosition }}%
+              <input type="range" min="10" max="90" step="1" v-model.number="desktopMenuTextPosition" />
+            </label>
+          </div>
+          <div>
+            <span>Mobile</span>
+            <label>
+              Height: {{ mobileMenuBarHeight }} px
+              <input type="range" min="40" max="140" step="1" v-model.number="mobileMenuBarHeight" />
+            </label>
+            <label>
+              Text height: {{ mobileMenuTextPosition }}%
+              <input type="range" min="10" max="90" step="1" v-model.number="mobileMenuTextPosition" />
+            </label>
+          </div>
+        </div>
+      </section>
+
       <section class="desktop-layout-settings">
         <strong>Desktop landing layout</strong>
         <label>
@@ -915,6 +943,10 @@ const subtitleTextWeight = ref(600)
 const navigationTextSize = ref(21)
 const navigationTextWeight = ref(700)
 const menuItemSpacing = ref(30)
+const desktopMenuBarHeight = ref(76)
+const desktopMenuTextPosition = ref(65)
+const mobileMenuBarHeight = ref(69)
+const mobileMenuTextPosition = ref(50)
 const headingTextSize = ref(18)
 const headingTextWeight = ref(500)
 const bodyTextSize = ref(14)
@@ -971,6 +1003,9 @@ const typographyStyle = computed(() => ({
   '--navigation-text-size': `${Math.max(13, navigationTextSize.value * typographyViewportScale.value)}px`,
   '--navigation-text-weight': navigationTextWeight.value,
   '--menu-item-spacing': `${Math.max(8, menuItemSpacing.value * typographyViewportScale.value)}px`,
+  '--desktop-menu-bar-height': `${desktopMenuBarHeight.value}px`,
+  '--mobile-menu-bar-height': `${mobileMenuBarHeight.value}px`,
+  '--mobile-menu-text-top': `${mobileMenuBarHeight.value * mobileMenuTextPosition.value / 100 - 10.5}px`,
   '--heading-text-size': `${Math.max(14, headingTextSize.value * typographyViewportScale.value)}px`,
   '--heading-text-weight': headingTextWeight.value,
   '--body-text-size': `${Math.max(12, bodyTextSize.value * typographyViewportScale.value)}px`,
@@ -995,6 +1030,10 @@ watch(
     navigationTextSize,
     navigationTextWeight,
     menuItemSpacing,
+    desktopMenuBarHeight,
+    desktopMenuTextPosition,
+    mobileMenuBarHeight,
+    mobileMenuTextPosition,
     desktopMenuLeft,
     desktopMenuTop,
     desktopLandingOffsetX,
@@ -1002,7 +1041,10 @@ watch(
   ],
   redrawTextMask,
 )
-watch(navigationTextSize, updateDesignScale)
+watch(
+  [navigationTextSize, desktopMenuBarHeight, desktopMenuTextPosition],
+  updateDesignScale,
+)
 const activeFont = computed(() => fontOptions.find(font => font.name === selectedFont.value) || fontOptions[0])
 let fontLoadRequest = 0
 
@@ -2501,10 +2543,11 @@ function updateDesignScale() {
   // lives inside the centred/scaled 1440×1000 design canvas. Convert the
   // viewport-centred menu band back to that canvas coordinate system so its
   // centre always lines up exactly with the fixed overlay edge.
-  const menuBandHeight = Math.max(13, navigationTextSize.value * typographyViewportScale.value) + 48
+  const menuBandHeight = desktopMenuBarHeight.value
   const menuButtonHeight = 34
+  const menuTextCenter = menuBandHeight * desktopMenuTextPosition.value / 100
   desktopMenuTop.value = 500
-    + (menuBandHeight / 2 - window.innerHeight / 2) / Math.max(0.001, designScale.value)
+    + (menuTextCenter - window.innerHeight / 2) / Math.max(0.001, designScale.value)
     - menuButtonHeight / 2
 
   const limits = desktopLayoutLimits.value
@@ -2586,6 +2629,16 @@ function exportSettings() {
         size: navigationTextSize.value,
         weight: navigationTextWeight.value,
         spacing: menuItemSpacing.value,
+      },
+      menuBar: {
+        desktop: {
+          height: desktopMenuBarHeight.value,
+          textPosition: desktopMenuTextPosition.value,
+        },
+        mobile: {
+          height: mobileMenuBarHeight.value,
+          textPosition: mobileMenuTextPosition.value,
+        },
       },
       contentTitles: { size: headingTextSize.value, weight: headingTextWeight.value },
       bodyText: { size: bodyTextSize.value, weight: bodyTextWeight.value },
@@ -2917,6 +2970,12 @@ watch(flightHeightMax, (value) => {
   font-weight: 600;
 }
 
+.menu-bar-settings .two-columns > div > span {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+}
+
 .three-columns {
   display: grid;
   grid-template-columns: 1fr;
@@ -3198,7 +3257,7 @@ watch(flightHeightMax, (value) => {
 
 .overlay {
   position: fixed;
-  inset: calc(var(--navigation-text-size, 18px) + 3rem) 0 0;
+  inset: var(--desktop-menu-bar-height, 69px) 0 0;
   isolation: isolate;
   background: transparent;
   display: flex;
@@ -3541,7 +3600,7 @@ watch(flightHeightMax, (value) => {
 
 @media (max-width: 760px) {
   .overlay {
-    inset: calc(env(safe-area-inset-top) + var(--navigation-text-size, 18px) + 3rem) 0 0;
+    inset: calc(env(safe-area-inset-top) + var(--mobile-menu-bar-height, 69px)) 0 0;
     align-items: center;
   }
 
@@ -3677,7 +3736,10 @@ watch(flightHeightMax, (value) => {
 
   .top-bar {
     position: fixed;
-    top: calc(env(safe-area-inset-top) + (var(--navigation-text-size, 18px) + 3rem - 21px) / 2);
+    top: calc(
+      env(safe-area-inset-top)
+      + var(--mobile-menu-text-top, 24px)
+    );
     right: max(14px, calc(env(safe-area-inset-right) + 10px));
     left: auto;
     width: auto;
