@@ -4,7 +4,7 @@
 
     <main class="landing-page" aria-label="Tom Eijkelenkamp portfolio">
       <section class="landing-intro">
-        <p>My work grows from a fascination with different ways of seeing, feeling and imagining the world. Moving between dance, animation, drawing, painting, computation and design, I explore the spaces where body, nature, technology and imagination meet.</p>
+        <p>As a multidisciplinary artist, I like to imagine and explore alternative worlds with a sense of idyllic dreamyness. I practiced being a musician, contemporary dancer and visual arts in multimedia.</p>
         <p>Nature and animals continually find their way into my work, alongside an interest in architecture, landscapes and the worlds we construct around ourselves. Meditation, movement and creative practice offer ways to move beyond habitual patterns of thought and discover other states of mind. I am interested in these moments of openness: places from which new images, environments and dream worlds can emerge.</p>
       </section>
       <section class="landing-profile" aria-labelledby="landing-name">
