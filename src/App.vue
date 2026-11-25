@@ -4,7 +4,7 @@
 
     <main class="landing-page" aria-label="Tom Eijkelenkamp portfolio">
       <section class="landing-intro">
-        <p>As a multidisciplinary artist, I like to imagine and explore alternative worlds with a sense of idyllic dreamyness. I practiced being a musician, contemporary dancer and visual arts in multimedia.</p>
+        <p>As a multidisciplinary artist, I like to imagine and explore alternative worlds with a sense of idyllic dreamyness. My practice includes music, contemporary dance and visual arts in multimedia.</p>
         <p>Nature and animals continually find their way into my work, alongside an interest in architecture, landscapes and the worlds we construct around ourselves. Meditation, movement and creative practice offer ways to move beyond habitual patterns of thought and discover other states of mind. I am interested in these moments of openness: places from which new images, environments and dream worlds can emerge.</p>
       </section>
       <section class="landing-profile" aria-labelledby="landing-name">
